@@ -267,9 +267,25 @@ async function init(){
     render();
     return;
   }
-  supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  if(typeof window.supabase === 'undefined'){
+    setConnStatus(false, '⚠ Supabase लाइब्रेरी लोड नहीं हो पाई (CDN ब्लॉक हो सकता है)');
+    render();
+    return;
+  }
+  try{
+    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  }catch(e){
+    console.error(e);
+    setConnStatus(false, '⚠ कनेक्शन शुरू नहीं हो सका: ' + (e.message || e));
+    render();
+    return;
+  }
   await loadMembers();
-  subscribeRealtime();
+  try{
+    subscribeRealtime();
+  }catch(e){
+    console.error('Realtime subscribe failed', e);
+  }
 }
 
 async function loadMembers(){
@@ -559,6 +575,7 @@ function exportToExcel(){
   XLSX.writeFile(wb, "galli_members.xlsx");
 }
 
+render();
 init();
 </script>
 </body>
