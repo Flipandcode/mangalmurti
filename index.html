@@ -237,16 +237,16 @@ const SUPABASE_ANON_KEY = "sb_publishable_y6lWbqtfNnuiDijfWxeCTw_eyAcPwZG";
 
 let sb = null;
 let MEMBERS = []; // array of {id, name, galli}
-let currentTab = "all";
+let currentTab = "unassigned";
 let editingId = null; // id of member currently being edited
 
 const TABS = [
+  {id:"unassigned", label:"निवड नाही"},
   {id:"all", label:"सर्व"},
   {id:"1", label:"गल्ली 1"},
   {id:"2", label:"गल्ली 2"},
   {id:"3", label:"गल्ली 3"},
-  {id:"4", label:"गल्ली 4"},
-  {id:"unassigned", label:"निवड नाही"}
+  {id:"4", label:"गल्ली 4"}
 ];
 
 function setConnStatus(ok, msg){
