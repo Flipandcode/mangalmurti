@@ -235,7 +235,7 @@ const SUPABASE_URL = "https://dtgwxfibkurjbgutlcxw.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_y6lWbqtfNnuiDijfWxeCTw_eyAcPwZG";
 // ==============================================
 
-let supabase = null;
+let sb = null;
 let MEMBERS = []; // array of {id, name, galli}
 let currentTab = "all";
 let editingId = null; // id of member currently being edited
@@ -273,7 +273,7 @@ async function init(){
     return;
   }
   try{
-    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   }catch(e){
     console.error(e);
     setConnStatus(false, '⚠ कनेक्शन शुरू नहीं हो सका: ' + (e.message || e));
@@ -290,7 +290,7 @@ async function init(){
 
 async function loadMembers(){
   try{
-    const { data, error } = await supabase
+    const { data, error } = await sb
       .from('galli_members')
       .select('id, name, galli')
       .order('created_at', { ascending: true });
@@ -305,7 +305,7 @@ async function loadMembers(){
 }
 
 function subscribeRealtime(){
-  supabase
+  sb
     .channel('galli_members_changes')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'galli_members' }, () => {
       loadMembers();
@@ -448,9 +448,9 @@ function renderList(){
 }
 
 async function updateGalli(member, galli){
-  if(!supabase) return;
+  if(!sb) return;
   try{
-    const { error } = await supabase
+    const { error } = await sb
       .from('galli_members')
       .update({ galli })
       .eq('id', member.id);
@@ -471,7 +471,7 @@ async function commitEdit(member, newNameRaw){
     return;
   }
   try{
-    const { error } = await supabase
+    const { error } = await sb
       .from('galli_members')
       .update({ name: newName })
       .eq('id', member.id);
@@ -488,7 +488,7 @@ async function commitEdit(member, newNameRaw){
 async function deleteMember(member){
   if(!confirm(`"${member.name}" को सूची से हटाएं?`)) return;
   try{
-    const { error } = await supabase
+    const { error } = await sb
       .from('galli_members')
       .delete()
       .eq('id', member.id);
@@ -510,7 +510,7 @@ async function addMember(){
     return;
   }
   try{
-    const { data, error } = await supabase
+    const { data, error } = await sb
       .from('galli_members')
       .insert({ name, galli: null })
       .select()
