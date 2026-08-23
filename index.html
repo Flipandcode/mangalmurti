@@ -2,7 +2,19 @@
 <html lang="hi">
 <head>
 <meta charset="UTF-8">
-<title>Galli Member Manager</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mangal Murti Member Manager</title>
+
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#2f6f4f">
+<link rel="icon" href="/icon-192.png">
+
+<!-- iOS "Add to Home Screen" support -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Galli Manager">
+<link rel="apple-touch-icon" href="/icon-192.png">
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root{
@@ -246,7 +258,21 @@ const TABS = [
   {id:"1", label:"गल्ली 1"},
   {id:"2", label:"गल्ली 2"},
   {id:"3", label:"गल्ली 3"},
-  {id:"4", label:"गल्ली 4"}
+  {id:"4", label:"गल्ली 4"},
+  {id:"committee", label:"समिती"}
+];
+
+const COMMITTEE = [
+  {name:"सतीश नलावडे", role:"अध्यक्ष"},
+  {name:"निलेश शिंदे", role:"उपाध्यक्ष"},
+  {name:"सूरज विनोद तिवारी", role:"उपाध्यक्ष"},
+  {name:"राहुल साहेबराव पाटील", role:"सचिव"},
+  {name:"महेंद्र वाडेकर", role:"उपसचिव"},
+  {name:"राकेश बागल", role:"खजिनदार"},
+  {name:"राकेश जानवळकर", role:"उपखजिनदार"},
+  {name:"बलेंद्र सिंह", role:"सदस्य"},
+  {name:"निराज पांडेय", role:"सदस्य"},
+  {name:"धर्मेश मिश्रा", role:"सदस्य"}
 ];
 
 function setConnStatus(ok, msg){
@@ -316,6 +342,7 @@ function subscribeRealtime(){
 function countFor(tabId){
   if(tabId === "all") return MEMBERS.length;
   if(tabId === "unassigned") return MEMBERS.filter(m => !m.galli).length;
+  if(tabId === "committee") return COMMITTEE.length;
   return MEMBERS.filter(m => m.galli === tabId).length;
 }
 
@@ -333,6 +360,27 @@ function renderTabs(){
 
 function renderList(){
   const listEl = document.getElementById('list');
+
+  if(currentTab === "committee"){
+    listEl.innerHTML = "";
+    COMMITTEE.forEach(person => {
+      const row = document.createElement('div');
+      row.className = 'row';
+
+      const nameEl = document.createElement('div');
+      nameEl.className = 'name';
+      nameEl.textContent = person.name;
+      const badge = document.createElement('span');
+      badge.className = 'badge';
+      badge.textContent = person.role;
+      nameEl.appendChild(badge);
+
+      row.appendChild(nameEl);
+      listEl.appendChild(row);
+    });
+    return;
+  }
+
   let members;
   if(currentTab === "all") members = MEMBERS;
   else if(currentTab === "unassigned") members = MEMBERS.filter(m => !m.galli);
@@ -571,6 +619,13 @@ function exportToExcel(){
   const uSheet = XLSX.utils.aoa_to_sheet(uRows);
   uSheet['!cols'] = [{wch:6},{wch:35}];
   XLSX.utils.book_append_sheet(wb, uSheet, "निवड नाही");
+
+  // Committee sheet
+  const cRows = [["क्र.", "नाम", "पद"]];
+  COMMITTEE.forEach((p, i) => cRows.push([i+1, p.name, p.role]));
+  const cSheet = XLSX.utils.aoa_to_sheet(cRows);
+  cSheet['!cols'] = [{wch:6},{wch:30},{wch:16}];
+  XLSX.utils.book_append_sheet(wb, cSheet, "समिती");
 
   XLSX.writeFile(wb, "galli_members.xlsx");
 }
