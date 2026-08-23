@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<title>Galli Member Manager</title>
+<style>
+  :root{
+    --bg:#faf8f5;
+    --panel:#ffffff;
+    --ink:#232323;
+    --muted:#7a7a7a;
+    --line:#e6e1d8;
+    --accent:#2f6f4f;
+    --accent-soft:#e8f2ec;
+    --tab-bg:#efece5;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:'Noto Sans', 'Segoe UI', Arial, sans-serif;
+    background:var(--bg);
+    color:var(--ink);
+    padding:20px;
+  }
+  h1{
+    font-size:20px;
+    margin:0 0 4px;
+    font-weight:700;
+  }
+  .sub{
+    color:var(--muted);
+    font-size:13px;
+    margin-bottom:18px;
+  }
+  .tabs{
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+    margin-bottom:16px;
+    border-bottom:1px solid var(--line);
+    padding-bottom:10px;
+  }
+  .tab-btn{
+    border:1px solid var(--line);
+    background:var(--tab-bg);
+    color:var(--ink);
+    padding:8px 14px;
+    border-radius:8px;
+    font-size:14px;
+    cursor:pointer;
+    font-weight:600;
+    transition:all .15s;
+  }
+  .tab-btn:hover{ background:#e2ddd0; }
+  .tab-btn.active{
+    background:var(--accent);
+    color:#fff;
+    border-color:var(--accent);
+  }
+  .count{
+    font-weight:400;
+    opacity:.85;
+    margin-left:4px;
+    font-size:12px;
+  }
+  .list{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:10px;
+    overflow:hidden;
+  }
+  .row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    padding:11px 14px;
+    border-bottom:1px solid var(--line);
+    font-size:14px;
+  }
+  .row:last-child{ border-bottom:none; }
+  .row:nth-child(even){ background:#fbfaf7; }
+  .name{
+    flex:1;
+    min-width:0;
+    word-break:break-word;
+  }
+  .badge{
+    font-size:11px;
+    background:var(--accent-soft);
+    color:var(--accent);
+    padding:2px 8px;
+    border-radius:20px;
+    margin-left:8px;
+    font-weight:600;
+    white-space:nowrap;
+  }
+  .select-wrap{
+    display:flex;
+    gap:4px;
+    flex-shrink:0;
+  }
+  select{
+    font-size:13px;
+    padding:6px 8px;
+    border-radius:6px;
+    border:1px solid var(--line);
+    background:#fff;
+    color:var(--ink);
+    cursor:pointer;
+  }
+  .empty{
+    padding:30px;
+    text-align:center;
+    color:var(--muted);
+    font-size:14px;
+  }
+  .top-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:8px;
+  }
+  .status{
+    font-size:12px;
+    color:var(--muted);
+  }
+  .save-indicator{
+    font-size:12px;
+    color:var(--accent);
+    opacity:0;
+    transition:opacity .3s;
+  }
+  .save-indicator.show{ opacity:1; }
+  .export-btn{
+    border:none;
+    background:var(--accent);
+    color:#fff;
+    padding:10px 16px;
+    border-radius:8px;
+    font-size:13px;
+    font-weight:700;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    gap:6px;
+  }
+  .export-btn:hover{ background:#265d41; }
+  .export-btn:disabled{
+    background:#b9b9b9;
+    cursor:not-allowed;
+  }
+  .header-actions{
+    display:flex;
+    align-items:center;
+    gap:12px;
+  }
+</style>
+</head>
+<body>
+
+<div class="top-row">
+  <div>
+    <h1>Galli सदस्य व्यवस्थापन</h1>
+    <div class="sub">प्रत्येक सदस्य के आगे से Galli चुनें। ऊपर के टैब से सूची देखें।</div>
+  </div>
+  <div class="header-actions">
+    <div class="save-indicator" id="saveIndicator">✓ Saved</div>
+    <button class="export-btn" id="exportBtn" onclick="exportToExcel()">⬇ Excel में निर्यात करें</button>
+  </div>
+</div>
+
+<div class="tabs" id="tabs"></div>
+<div class="list" id="list"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+const MEMBERS = [
+"संगीता पालव","प्रमोद क्रांतीलाल रावल","रामेश्वर पांडुरंग दळवी","प्रेमशंकर चौबे",
+"नरशी जे. पटेल","तिलक यादव","सुनील यादव","दीपक गुप्ता","सुरेश कनौजा","दिनेश यादव",
+"जगदीश बहादुर यादव","मंगेश जानवळकर","शैलेंद्र यादव","मंजूनाथ कुरतडकर","तनुजा एम. कुरतडकर",
+"वी. डी. शर्मा","बिंबा साहू","मिंटू संतालाल सिंह","रामशंकर परशुनाथ पांडेय","बच्छूराम बनवारी यादव",
+"संजय राधेश्याम दुबे","लोकनाथ रामस्वरूप सिंह","भरत शिंदे","ज्ञानेश्वर निंबा पाटील","बी. रणधीर सिंह",
+"रमेश मकवाना","मनसुख मकवाना","प्रकाश कोली","कविता मकवाना","निलेश शिंदे","दिनेश साहनी",
+"धर्मेश ईश्वरप्रसाद मिश्र","रामाशंकर यादव","गुलाब प्रजापति","विष्णु शंकर पवार","शिवकुमार जायसवाल",
+"बच्चा चौहान","राहुल पाटील","मदन सिंह मेहरा","उमा शंकर विश्वकर्मा","राकेश जानवळकर",
+"राजभर लॉटन","चंद्रकांत राजभर","जमुना प्रसाद यादव","योगेश सैगांवकर","निराला यादव",
+"सतीश नलावड़े","भरत सस्ते","राकेश बागल","महादेव बामणकर","जयराम विश्वकर्मा","बच्छूराम यादव",
+"जितेंद्र पाल","कांता हरिनाथ यादव","रीना संजय यादव","जीतनारायण रामनिहोर यादव",
+"सुनीता अशोक जानवळकर","गंगाधर साहू","विजय यादव","नर्मदा कनौजा","गोविंद किंजे",
+"आशा विनोद तिवारी","मुखरन पाल","महेंद्र वाडेकर","सिद्धेश्वर शिवाजी बोबडे",
+"रामचंद्र समलाप्रसाद यादव","रमाशंकर हरिलाल यादव","रुपेश अशोक जानवळकर"
+];
+
+const STORAGE_KEY = "galli_assignments_v1";
+let assignments = {}; // name -> "1"|"2"|"3"|"4"|""
+let currentTab = "all";
+
+const TABS = [
+  {id:"all", label:"सर्व"},
+  {id:"1", label:"गल्ली 1"},
+  {id:"2", label:"गल्ली 2"},
+  {id:"3", label:"गल्ली 3"},
+  {id:"4", label:"गल्ली 4"},
+  {id:"unassigned", label:"निवड नाही"}
+];
+
+async function loadAssignments(){
+  try{
+    const res = await window.storage.get(STORAGE_KEY, false);
+    if(res && res.value){
+      assignments = JSON.parse(res.value);
+    }
+  }catch(e){
+    // key doesn't exist yet, that's fine
+    assignments = {};
+  }
+  render();
+}
+
+async function saveAssignments(){
+  try{
+    await window.storage.set(STORAGE_KEY, JSON.stringify(assignments), false);
+    const ind = document.getElementById('saveIndicator');
+    ind.classList.add('show');
+    setTimeout(()=>ind.classList.remove('show'), 900);
+  }catch(e){
+    console.error("Save failed", e);
+  }
+}
+
+function countFor(tabId){
+  if(tabId === "all") return MEMBERS.length;
+  if(tabId === "unassigned") return MEMBERS.filter(n => !assignments[n]).length;
+  return MEMBERS.filter(n => assignments[n] === tabId).length;
+}
+
+function renderTabs(){
+  const tabsEl = document.getElementById('tabs');
+  tabsEl.innerHTML = "";
+  TABS.forEach(t => {
+    const btn = document.createElement('button');
+    btn.className = 'tab-btn' + (currentTab === t.id ? ' active' : '');
+    btn.innerHTML = `${t.label}<span class="count">(${countFor(t.id)})</span>`;
+    btn.onclick = () => { currentTab = t.id; render(); };
+    tabsEl.appendChild(btn);
+  });
+}
+
+function renderList(){
+  const listEl = document.getElementById('list');
+  let names;
+  if(currentTab === "all") names = MEMBERS;
+  else if(currentTab === "unassigned") names = MEMBERS.filter(n => !assignments[n]);
+  else names = MEMBERS.filter(n => assignments[n] === currentTab);
+
+  if(names.length === 0){
+    listEl.innerHTML = `<div class="empty">इस टैब में कोई सदस्य नहीं है</div>`;
+    return;
+  }
+
+  listEl.innerHTML = "";
+  names.forEach(name => {
+    const row = document.createElement('div');
+    row.className = 'row';
+
+    const nameEl = document.createElement('div');
+    nameEl.className = 'name';
+    nameEl.textContent = name;
+    if(assignments[name]){
+      const badge = document.createElement('span');
+      badge.className = 'badge';
+      badge.textContent = 'गल्ली ' + assignments[name];
+      nameEl.appendChild(badge);
+    }
+
+    const selectWrap = document.createElement('div');
+    selectWrap.className = 'select-wrap';
+    const select = document.createElement('select');
+    const options = [
+      {v:"", l:"निवड नाही"},
+      {v:"1", l:"गल्ली 1"},
+      {v:"2", l:"गल्ली 2"},
+      {v:"3", l:"गल्ली 3"},
+      {v:"4", l:"गल्ली 4"}
+    ];
+    options.forEach(o => {
+      const opt = document.createElement('option');
+      opt.value = o.v;
+      opt.textContent = o.l;
+      if((assignments[name] || "") === o.v) opt.selected = true;
+      select.appendChild(opt);
+    });
+    select.onchange = async (e) => {
+      const val = e.target.value;
+      if(val) assignments[name] = val;
+      else delete assignments[name];
+      await saveAssignments();
+      render();
+    };
+    selectWrap.appendChild(select);
+
+    row.appendChild(nameEl);
+    row.appendChild(selectWrap);
+    listEl.appendChild(row);
+  });
+}
+
+function render(){
+  renderTabs();
+  renderList();
+}
+
+function exportToExcel(){
+  if(typeof XLSX === 'undefined'){
+    alert("Excel लाइब्रेरी लोड नहीं हो पाई। कृपया इंटरनेट कनेक्शन जांचें और पुनः प्रयास करें।");
+    return;
+  }
+
+  const wb = XLSX.utils.book_new();
+
+  // Sheet 1: Summary — all members with their galli number, sorted by galli
+  const summaryRows = [["क्र.", "नाम", "गल्ली"]];
+  const sortedMembers = [...MEMBERS].sort((a,b) => {
+    const ga = assignments[a] || "9"; // unassigned goes last
+    const gb = assignments[b] || "9";
+    if(ga !== gb) return ga.localeCompare(gb);
+    return a.localeCompare(b, 'hi');
+  });
+  sortedMembers.forEach((name, i) => {
+    summaryRows.push([i+1, name, assignments[name] ? ("गल्ली " + assignments[name]) : "निवड नाही"]);
+  });
+  const summarySheet = XLSX.utils.aoa_to_sheet(summaryRows);
+  summarySheet['!cols'] = [{wch:6},{wch:35},{wch:14}];
+  XLSX.utils.book_append_sheet(wb, summarySheet, "सर्व सदस्य");
+
+  // Separate sheet per galli 1-4
+  for(let g = 1; g <= 4; g++){
+    const gStr = String(g);
+    const names = MEMBERS.filter(n => assignments[n] === gStr);
+    const rows = [["क्र.", "नाम"]];
+    names.forEach((name, i) => rows.push([i+1, name]));
+    if(rows.length === 1) rows.push(["-", "(कोई सदस्य नहीं)"]);
+    const sheet = XLSX.utils.aoa_to_sheet(rows);
+    sheet['!cols'] = [{wch:6},{wch:35}];
+    XLSX.utils.book_append_sheet(wb, sheet, "गल्ली " + g);
+  }
+
+  // Sheet for unassigned
+  const unassigned = MEMBERS.filter(n => !assignments[n]);
+  const uRows = [["क्र.", "नाम"]];
+  unassigned.forEach((name, i) => uRows.push([i+1, name]));
+  if(uRows.length === 1) uRows.push(["-", "(कोई सदस्य नहीं)"]);
+  const uSheet = XLSX.utils.aoa_to_sheet(uRows);
+  uSheet['!cols'] = [{wch:6},{wch:35}];
+  XLSX.utils.book_append_sheet(wb, uSheet, "निवड नाही");
+
+  XLSX.writeFile(wb, "galli_members.xlsx");
+}
+
+loadAssignments();
+</script>
+</body>
+</html>
