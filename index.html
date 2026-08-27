@@ -955,12 +955,13 @@ const POSTER_STYLE = `
   #posterRoot .p-galli-section{ padding:0 60px 50px 60px; }
   #posterRoot .p-galli-grid{
     display:flex;
-    flex-wrap:wrap;
-    gap:26px;
+    flex-wrap:nowrap;
+    gap:18px;
     justify-content:center;
   }
   #posterRoot .p-galli-card{
-    width:380px;
+    width:364px;
+    flex-shrink:0;
     border-radius:18px;
     overflow:hidden;
     box-shadow:0 8px 20px rgba(0,0,0,0.15);
