@@ -15,7 +15,13 @@
 <meta name="apple-mobile-web-app-title" content="Galli Manager">
 <link rel="apple-touch-icon" href="/icon-192.png">
 
+<!-- Devanagari web font, used for crisp poster rendering -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800;900&family=Noto+Sans+Devanagari:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
   :root{
     --bg:#faf8f5;
@@ -112,6 +118,7 @@
     display:flex;
     gap:4px;
     flex-shrink:0;
+    align-items:center;
   }
   select{
     font-size:13px;
@@ -122,6 +129,17 @@
     color:var(--ink);
     cursor:pointer;
   }
+  .room-input{
+    width:64px;
+    font-size:13px;
+    padding:6px 6px;
+    border-radius:6px;
+    border:1px solid var(--line);
+    background:#fff;
+    color:var(--ink);
+    text-align:center;
+  }
+  .room-input::placeholder{ color:#b8b2a5; }
   .empty{
     padding:30px;
     text-align:center;
@@ -164,10 +182,29 @@
     background:#b9b9b9;
     cursor:not-allowed;
   }
+  .poster-btn{
+    border:none;
+    background:#e65100;
+    color:#fff;
+    padding:10px 16px;
+    border-radius:8px;
+    font-size:13px;
+    font-weight:700;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    gap:6px;
+  }
+  .poster-btn:hover{ background:#c64600; }
+  .poster-btn:disabled{
+    background:#b9b9b9;
+    cursor:not-allowed;
+  }
   .header-actions{
     display:flex;
     align-items:center;
     gap:12px;
+    flex-wrap:wrap;
   }
   .icon-btn{
     border:1px solid var(--line);
@@ -229,10 +266,11 @@
 <div class="top-row">
   <div>
     <h1>Mangal Murti Chawl सदस्य व्यवस्थापन</h1>
-    <div class="sub">प्रत्येक सदस्य के आगे से Galli चुनें। ऊपर के टैब से सूची देखें। <span id="connStatus"></span></div>
+    <div class="sub">प्रत्येक सदस्य के आगे से Galli और रूम नंबर चुनें। ऊपर के टैब से सूची देखें। <span id="connStatus"></span></div>
   </div>
   <div class="header-actions">
     <div class="save-indicator" id="saveIndicator">✓ Saved</div>
+    <button class="poster-btn" id="posterBtn" onclick="generatePoster()">🖼 पोस्टर बनाएं</button>
     <button class="export-btn" id="exportBtn" onclick="exportToExcel()">⬇ Excel में निर्यात करें</button>
   </div>
 </div>
@@ -240,15 +278,18 @@
 <div class="tabs" id="tabs"></div>
 <div class="list" id="list"></div>
 
+<!-- Hidden off-screen container used to render the poster before capturing it as an image -->
+<div id="posterRoot" style="position:absolute; left:-99999px; top:0; width:1700px;"></div>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
-// ====== SUPABASE CONFIG — fill these in ======
+// ====== SUPABASE CONFIG ======
 const SUPABASE_URL = "https://dtgwxfibkurjbgutlcxw.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_y6lWbqtfNnuiDijfWxeCTw_eyAcPwZG";
 // ==============================================
 
 let sb = null;
-let MEMBERS = []; // array of {id, name, galli}
+let MEMBERS = []; // array of {id, name, galli, room_no}
 let currentTab = "unassigned";
 let editingId = null; // id of member currently being edited
 
@@ -318,7 +359,7 @@ async function loadMembers(){
   try{
     const { data, error } = await sb
       .from('galli_members')
-      .select('id, name, galli')
+      .select('id, name, galli, room_no')
       .order('created_at', { ascending: true });
     if(error) throw error;
     MEMBERS = data || [];
@@ -358,6 +399,20 @@ function renderTabs(){
   });
 }
 
+// Sort helper: ascending by room number. Numeric-aware, blanks go last.
+function sortByRoom(members){
+  return [...members].sort((a,b) => {
+    const ra = (a.room_no || '').toString().trim();
+    const rb = (b.room_no || '').toString().trim();
+    if(!ra && !rb) return 0;
+    if(!ra) return 1;
+    if(!rb) return -1;
+    const na = parseFloat(ra), nb = parseFloat(rb);
+    if(!isNaN(na) && !isNaN(nb) && na !== nb) return na - nb;
+    return ra.localeCompare(rb, 'hi', {numeric:true});
+  });
+}
+
 function renderList(){
   const listEl = document.getElementById('list');
 
@@ -385,6 +440,11 @@ function renderList(){
   if(currentTab === "all") members = MEMBERS;
   else if(currentTab === "unassigned") members = MEMBERS.filter(m => !m.galli);
   else members = MEMBERS.filter(m => m.galli === currentTab);
+
+  // Sort ascending by room number when viewing a specific galli tab
+  if(["1","2","3","4"].includes(currentTab)){
+    members = sortByRoom(members);
+  }
 
   listEl.innerHTML = "";
 
@@ -435,12 +495,13 @@ function renderList(){
     if(member.galli){
       const badge = document.createElement('span');
       badge.className = 'badge';
-      badge.textContent = 'गल्ली ' + member.galli;
+      badge.textContent = 'गल्ली ' + member.galli + (member.room_no ? ' · रूम ' + member.room_no : '');
       nameEl.appendChild(badge);
     }
 
     const selectWrap = document.createElement('div');
     selectWrap.className = 'select-wrap';
+
     const select = document.createElement('select');
     const options = [
       {v:"", l:"निवड नाही"},
@@ -460,6 +521,20 @@ function renderList(){
       await updateGalli(member, e.target.value || null);
     };
     selectWrap.appendChild(select);
+
+    const roomInput = document.createElement('input');
+    roomInput.className = 'room-input';
+    roomInput.type = 'text';
+    roomInput.placeholder = 'रूम नं.';
+    roomInput.value = member.room_no || '';
+    roomInput.onblur = (e) => {
+      const val = e.target.value.trim();
+      if(val !== (member.room_no || '')) updateRoom(member, val || null);
+    };
+    roomInput.onkeydown = (e) => {
+      if(e.key === 'Enter') e.target.blur();
+    };
+    selectWrap.appendChild(roomInput);
 
     const editBtn = document.createElement('button');
     editBtn.className = 'icon-btn';
@@ -508,6 +583,22 @@ async function updateGalli(member, galli){
     render();
   }catch(e){
     alert('अपडेट नहीं हो सका: ' + (e.message || e));
+  }
+}
+
+async function updateRoom(member, room_no){
+  if(!sb) return;
+  try{
+    const { error } = await sb
+      .from('galli_members')
+      .update({ room_no })
+      .eq('id', member.id);
+    if(error) throw error;
+    member.room_no = room_no;
+    showSaved();
+    render();
+  }catch(e){
+    alert('रूम नंबर सेव नहीं हो सका: ' + (e.message || e));
   }
 }
 
@@ -560,7 +651,7 @@ async function addMember(){
   try{
     const { data, error } = await sb
       .from('galli_members')
-      .insert({ name, galli: null })
+      .insert({ name, galli: null, room_no: null })
       .select()
       .single();
     if(error) throw error;
@@ -587,7 +678,7 @@ function exportToExcel(){
 
   const wb = XLSX.utils.book_new();
 
-  const summaryRows = [["क्र.", "नाम", "गल्ली"]];
+  const summaryRows = [["क्र.", "नाम", "गल्ली", "रूम नं."]];
   const sortedMembers = [...MEMBERS].sort((a,b) => {
     const ga = a.galli || "9";
     const gb = b.galli || "9";
@@ -595,20 +686,20 @@ function exportToExcel(){
     return a.name.localeCompare(b.name, 'hi');
   });
   sortedMembers.forEach((m, i) => {
-    summaryRows.push([i+1, m.name, m.galli ? ("गल्ली " + m.galli) : "निवड नाही"]);
+    summaryRows.push([i+1, m.name, m.galli ? ("गल्ली " + m.galli) : "निवड नाही", m.room_no || ""]);
   });
   const summarySheet = XLSX.utils.aoa_to_sheet(summaryRows);
-  summarySheet['!cols'] = [{wch:6},{wch:35},{wch:14}];
+  summarySheet['!cols'] = [{wch:6},{wch:35},{wch:14},{wch:10}];
   XLSX.utils.book_append_sheet(wb, summarySheet, "सर्व सदस्य");
 
   for(let g = 1; g <= 4; g++){
     const gStr = String(g);
-    const names = MEMBERS.filter(m => m.galli === gStr);
-    const rows = [["क्र.", "नाम"]];
-    names.forEach((m, i) => rows.push([i+1, m.name]));
-    if(rows.length === 1) rows.push(["-", "(कोई सदस्य नहीं)"]);
+    const names = sortByRoom(MEMBERS.filter(m => m.galli === gStr));
+    const rows = [["क्र.", "नाम", "रूम नं."]];
+    names.forEach((m, i) => rows.push([i+1, m.name, m.room_no || ""]));
+    if(rows.length === 1) rows.push(["-", "(कोई सदस्य नहीं)", ""]);
     const sheet = XLSX.utils.aoa_to_sheet(rows);
-    sheet['!cols'] = [{wch:6},{wch:35}];
+    sheet['!cols'] = [{wch:6},{wch:35},{wch:10}];
     XLSX.utils.book_append_sheet(wb, sheet, "गल्ली " + g);
   }
 
@@ -628,6 +719,359 @@ function exportToExcel(){
   XLSX.utils.book_append_sheet(wb, cSheet, "समिती");
 
   XLSX.writeFile(wb, "galli_members.xlsx");
+}
+
+// ===================== POSTER GENERATION =====================
+
+function escHtml(s){
+  const div = document.createElement('div');
+  div.textContent = s;
+  return div.innerHTML;
+}
+
+function buildPosterHTML(){
+  const galliLists = {1:[], 2:[], 3:[], 4:[]};
+  MEMBERS.forEach(m => {
+    if(m.galli && galliLists[m.galli]) galliLists[m.galli].push(m);
+  });
+  Object.keys(galliLists).forEach(g => { galliLists[g] = sortByRoom(galliLists[g]); });
+
+  const totalMembers = galliLists[1].length + galliLists[2].length + galliLists[3].length + galliLists[4].length;
+
+  function namesFor(role){
+    return COMMITTEE.filter(c => c.role === role).map(c => c.name);
+  }
+  const adhyaksh = namesFor('अध्यक्ष');
+  const upadhyaksh = namesFor('उपाध्यक्ष');
+  const sachiv = namesFor('सचिव');
+  const upsachiv = namesFor('उपसचिव');
+  const khajindar = namesFor('खजिनदार');
+  const upkhaj = namesFor('उपखजिनदार');
+  const sadasya = namesFor('सदस्य');
+
+  function chip(role, name, cls){
+    return `<div class="p-chip ${cls}">
+        <div class="p-chip-role">${escHtml(role)}</div>
+        <div class="p-chip-name">श्री. ${escHtml(name)}</div>
+      </div>`;
+  }
+
+  let chipsHtml = "";
+  adhyaksh.forEach(n => chipsHtml += chip("अध्यक्ष", n, "p-chip-gold"));
+  upadhyaksh.forEach(n => chipsHtml += chip("उपाध्यक्ष", n, "p-chip-maroon"));
+  sachiv.forEach(n => chipsHtml += chip("सचिव", n, "p-chip-maroon"));
+  upsachiv.forEach(n => chipsHtml += chip("उपसचिव", n, "p-chip-purple"));
+  khajindar.forEach(n => chipsHtml += chip("खजिनदार", n, "p-chip-gold"));
+  upkhaj.forEach(n => chipsHtml += chip("उपखजिनदार", n, "p-chip-purple"));
+
+  const advisorChips = sadasya.map(n => `<div class="p-advisor-chip">श्री. ${escHtml(n)}</div>`).join("");
+
+  const galliColors = [
+    ["#8e24aa", "#f3e5f5"],
+    ["#d84315", "#fff3e0"],
+    ["#00695c", "#e0f2f1"],
+    ["#ad1457", "#fce4ec"]
+  ];
+
+  function galliCard(num, title, members, accent, bgTint){
+    let items = "";
+    members.forEach((m, i) => {
+      const roomTxt = m.room_no ? ` <span class="p-room">(रूम ${escHtml(m.room_no)})</span>` : '';
+      items += `<div class="p-member-row">
+          <span class="p-member-idx" style="background:${accent};">${i+1}</span>
+          <span class="p-member-name">${escHtml(m.name)}${roomTxt}</span>
+        </div>`;
+    });
+    return `
+      <div class="p-galli-card">
+        <div class="p-galli-card-header" style="background:linear-gradient(135deg,${accent},${accent}cc);">
+          <span class="p-galli-card-title">${escHtml(title)}</span>
+          <span class="p-galli-card-count">${members.length} सदस्य</span>
+        </div>
+        <div class="p-galli-card-body" style="background:${bgTint};">
+          ${items}
+        </div>
+      </div>`;
+  }
+
+  const galliCardsHtml =
+    galliCard(1, "गल्ली क्रमांक १", galliLists[1], galliColors[0][0], galliColors[0][1]) +
+    galliCard(2, "गल्ली क्रमांक २", galliLists[2], galliColors[1][0], galliColors[1][1]) +
+    galliCard(3, "गल्ली क्रमांक ३", galliLists[3], galliColors[2][0], galliColors[2][1]) +
+    galliCard(4, "गल्ली क्रमांक ४", galliLists[4], galliColors[3][0], galliColors[3][1]);
+
+  return `
+  <div class="p-body">
+    <div class="p-header">
+      <div class="p-eyebrow">॥ श्री गणेशाय नमः ॥</div>
+      <div class="p-main-title">मंगलमुर्ती चाळ</div>
+      <div class="p-sub-title">रहिवासी व पदाधिकारी सूची</div>
+    </div>
+    <div class="p-scallop"></div>
+
+    <div class="p-committee-section">
+      <div class="p-section-heading">
+        <div class="p-line"></div>
+        <div class="p-label">पदाधिकारी समिती</div>
+        <div class="p-line"></div>
+      </div>
+      <div class="p-chip-wrap">${chipsHtml}</div>
+      <div class="p-advisor-panel">
+        <span class="p-advisor-label">सदस्य (सल्लागार):</span>
+        ${advisorChips}
+      </div>
+    </div>
+
+    <div class="p-galli-section">
+      <div class="p-section-heading">
+        <div class="p-line"></div>
+        <div class="p-label">गल्लीनुसार सभासद यादी</div>
+        <div class="p-line"></div>
+      </div>
+      <div class="p-galli-grid">${galliCardsHtml}</div>
+    </div>
+
+    <div class="p-footer">एकूण सभासद संख्या: <span class="p-count">${totalMembers}</span></div>
+  </div>`;
+}
+
+const POSTER_STYLE = `
+<style id="posterStyleTag">
+  #posterRoot *{ box-sizing:border-box; margin:0; padding:0; }
+  #posterRoot .p-body{
+    font-family:'Noto Sans Devanagari','Poppins',sans-serif;
+    width:1700px;
+    background:#fdf6ec;
+  }
+  #posterRoot .p-header{
+    position:relative;
+    background:linear-gradient(135deg,#ffb300 0%,#ff8f00 45%,#e65100 100%);
+    padding:50px 60px 70px 60px;
+    text-align:center;
+    overflow:hidden;
+  }
+  #posterRoot .p-eyebrow{
+    color:#fff8e1;
+    font-size:26px;
+    font-weight:600;
+    letter-spacing:6px;
+    margin-bottom:6px;
+  }
+  #posterRoot .p-main-title{
+    font-size:96px;
+    font-weight:900;
+    color:#ffffff;
+    text-shadow: 0 4px 0 #b71c1c, 0 8px 18px rgba(0,0,0,0.25);
+    letter-spacing:2px;
+  }
+  #posterRoot .p-sub-title{
+    margin-top:14px;
+    font-size:30px;
+    font-weight:700;
+    color:#fff3e0;
+    letter-spacing:3px;
+  }
+  #posterRoot .p-scallop{
+    height:34px;
+    background:radial-gradient(circle at 17px -6px, transparent 16px, #fdf6ec 17px) repeat-x;
+    background-size:34px 34px;
+    margin-top:-2px;
+  }
+  #posterRoot .p-committee-section{ padding:20px 60px 10px 60px; }
+  #posterRoot .p-section-heading{
+    display:flex;
+    align-items:center;
+    gap:16px;
+    margin-bottom:22px;
+  }
+  #posterRoot .p-line{
+    flex:1;
+    height:3px;
+    background:linear-gradient(90deg, transparent, #d4af37, transparent);
+  }
+  #posterRoot .p-label{
+    font-size:36px;
+    font-weight:800;
+    color:#8B0000;
+    white-space:nowrap;
+  }
+  #posterRoot .p-chip-wrap{
+    display:flex;
+    flex-wrap:wrap;
+    gap:16px;
+    justify-content:center;
+    margin-bottom:22px;
+  }
+  #posterRoot .p-chip{
+    border-radius:14px;
+    padding:14px 26px;
+    min-width:220px;
+    text-align:center;
+    box-shadow:0 4px 10px rgba(0,0,0,0.12);
+    border:2px solid rgba(0,0,0,0.06);
+  }
+  #posterRoot .p-chip-role{
+    font-size:19px;
+    font-weight:700;
+    color:#ffffff;
+    opacity:0.95;
+    margin-bottom:4px;
+    letter-spacing:1px;
+  }
+  #posterRoot .p-chip-name{
+    font-size:24px;
+    font-weight:800;
+    color:#ffffff;
+  }
+  #posterRoot .p-chip-gold{ background:linear-gradient(135deg,#e0a800,#c98a00); }
+  #posterRoot .p-chip-maroon{ background:linear-gradient(135deg,#a3231f,#7a1a17); }
+  #posterRoot .p-chip-purple{ background:linear-gradient(135deg,#7b1fa2,#5c1580); }
+  #posterRoot .p-advisor-panel{
+    background:#fff8e1;
+    border:2px dashed #d4af37;
+    border-radius:16px;
+    padding:18px 26px;
+    display:flex;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:14px;
+    margin-bottom:36px;
+  }
+  #posterRoot .p-advisor-label{
+    font-size:22px;
+    font-weight:800;
+    color:#8B0000;
+    margin-right:6px;
+  }
+  #posterRoot .p-advisor-chip{
+    background:#ffffff;
+    border:2px solid #d4af37;
+    color:#5c3d00;
+    font-weight:700;
+    font-size:19px;
+    padding:8px 18px;
+    border-radius:999px;
+  }
+  #posterRoot .p-galli-section{ padding:0 60px 50px 60px; }
+  #posterRoot .p-galli-grid{
+    display:flex;
+    flex-wrap:wrap;
+    gap:26px;
+    justify-content:center;
+  }
+  #posterRoot .p-galli-card{
+    width:380px;
+    border-radius:18px;
+    overflow:hidden;
+    box-shadow:0 8px 20px rgba(0,0,0,0.15);
+    border:1px solid rgba(0,0,0,0.05);
+  }
+  #posterRoot .p-galli-card-header{
+    padding:16px 20px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+  }
+  #posterRoot .p-galli-card-title{
+    color:#fff;
+    font-size:24px;
+    font-weight:800;
+  }
+  #posterRoot .p-galli-card-count{
+    color:#fff;
+    font-size:15px;
+    font-weight:600;
+    background:rgba(255,255,255,0.25);
+    padding:4px 12px;
+    border-radius:999px;
+  }
+  #posterRoot .p-galli-card-body{ padding:16px 18px 20px 18px; }
+  #posterRoot .p-member-row{
+    display:flex;
+    align-items:flex-start;
+    gap:12px;
+    padding:8px 4px;
+    border-bottom:1px solid rgba(0,0,0,0.06);
+  }
+  #posterRoot .p-member-row:last-child{ border-bottom:none; }
+  #posterRoot .p-member-idx{
+    flex-shrink:0;
+    width:26px;
+    height:26px;
+    border-radius:50%;
+    color:#fff;
+    font-size:13px;
+    font-weight:700;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    margin-top:2px;
+  }
+  #posterRoot .p-member-name{
+    font-size:19px;
+    font-weight:600;
+    color:#2b2b2b;
+    line-height:1.3;
+  }
+  #posterRoot .p-room{
+    font-size:15px;
+    font-weight:600;
+    color:#6a6a6a;
+  }
+  #posterRoot .p-footer{
+    text-align:center;
+    padding:24px 20px 34px 20px;
+    color:#8B0000;
+    font-size:20px;
+    font-weight:700;
+    letter-spacing:1px;
+  }
+  #posterRoot .p-count{ color:#e65100; }
+</style>`;
+
+async function generatePoster(){
+  const btn = document.getElementById('posterBtn');
+  const originalText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = '⏳ बन रहा है...';
+
+  try{
+    // Inject poster-scoped styles once
+    if(!document.getElementById('posterStyleTag')){
+      document.head.insertAdjacentHTML('beforeend', POSTER_STYLE);
+    }
+
+    const root = document.getElementById('posterRoot');
+    root.innerHTML = buildPosterHTML();
+
+    // Give web fonts a moment to apply before capture
+    await new Promise(r => setTimeout(r, 300));
+
+    const canvas = await html2canvas(root, {
+      backgroundColor: '#fdf6ec',
+      scale: 2,
+      useCORS: true,
+      width: 1700,
+      windowWidth: 1700
+    });
+
+    const dataUrl = canvas.toDataURL('image/png');
+    const link = document.createElement('a');
+    const dateStr = new Date().toISOString().slice(0,10);
+    link.download = `mangalmurti_poster_${dateStr}.png`;
+    link.href = dataUrl;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    root.innerHTML = ""; // clear hidden container
+  }catch(e){
+    console.error('Poster generation failed', e);
+    alert('पोस्टर नहीं बन सका: ' + (e.message || e));
+  }finally{
+    btn.disabled = false;
+    btn.textContent = originalText;
+  }
 }
 
 render();
