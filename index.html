@@ -6,1179 +6,4086 @@
 <title>Mangal Murti Member Manager</title>
 
 <link rel="manifest" href="/manifest.json">
-<meta name="theme-color" content="#2f6f4f">
+<meta name="theme-color" content="#7c2d12">
 <link rel="icon" href="/icon-192.png">
 
-<!-- iOS "Add to Home Screen" support -->
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Galli Manager">
 <link rel="apple-touch-icon" href="/icon-192.png">
 
-<!-- Devanagari web font, used for crisp poster rendering -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800;900&family=Noto+Sans+Devanagari:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
 <style>
-  :root{
-    --bg:#faf8f5;
-    --panel:#ffffff;
-    --ink:#232323;
-    --muted:#7a7a7a;
-    --line:#e6e1d8;
-    --accent:#2f6f4f;
-    --accent-soft:#e8f2ec;
-    --tab-bg:#efece5;
+:root{
+  --bg:#f5f3ef;
+  --surface:#ffffff;
+  --surface-soft:#faf9f7;
+  --ink:#1f1b18;
+  --muted:#827a73;
+  --line:#e8e3dc;
+
+  --primary:#7c2d12;
+  --primary-dark:#5f210d;
+  --primary-light:#fff1e8;
+
+  --gold:#d97706;
+  --gold-light:#fff8e8;
+
+  --galli1:#7c3aed;
+  --galli1-soft:#f3efff;
+
+  --galli2:#ea580c;
+  --galli2-soft:#fff1e8;
+
+  --galli3:#059669;
+  --galli3-soft:#eafaf4;
+
+  --galli4:#db2777;
+  --galli4-soft:#fff0f7;
+
+  --danger:#dc2626;
+  --danger-soft:#fff0f0;
+
+  --success:#059669;
+  --shadow:0 8px 30px rgba(45,35,25,.07);
+  --shadow-lg:0 20px 50px rgba(45,35,25,.14);
+}
+
+*{
+  box-sizing:border-box;
+}
+
+html{
+  scroll-behavior:smooth;
+}
+
+body{
+  margin:0;
+  font-family:'Noto Sans Devanagari','Poppins',sans-serif;
+  background:
+    radial-gradient(circle at top left, #fff8ef 0, transparent 30%),
+    var(--bg);
+  color:var(--ink);
+  min-height:100vh;
+}
+
+/* ================= APP ================= */
+
+.app{
+  width:min(1400px, 100%);
+  margin:auto;
+  padding:20px;
+}
+
+/* ================= HEADER ================= */
+
+.hero{
+  position:relative;
+  overflow:hidden;
+  border-radius:28px;
+  padding:30px;
+  color:white;
+  background:
+    radial-gradient(circle at 85% 10%, rgba(255,255,255,.16), transparent 22%),
+    linear-gradient(135deg,#5f210d 0%,#7c2d12 42%,#b45309 100%);
+  box-shadow:var(--shadow-lg);
+}
+
+.hero::before{
+  content:"";
+  position:absolute;
+  width:380px;
+  height:380px;
+  border-radius:50%;
+  right:-150px;
+  bottom:-260px;
+  border:60px solid rgba(255,255,255,.05);
+}
+
+.hero::after{
+  content:"✦";
+  position:absolute;
+  right:42px;
+  top:26px;
+  font-size:100px;
+  color:rgba(255,255,255,.06);
+}
+
+.hero-top{
+  position:relative;
+  z-index:1;
+  display:flex;
+  justify-content:space-between;
+  gap:20px;
+  align-items:flex-start;
+}
+
+.brand{
+  display:flex;
+  align-items:center;
+  gap:16px;
+}
+
+.brand-icon{
+  width:62px;
+  height:62px;
+  border-radius:20px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:30px;
+  background:rgba(255,255,255,.15);
+  border:1px solid rgba(255,255,255,.2);
+  backdrop-filter:blur(10px);
+}
+
+.hero-eyebrow{
+  font-size:12px;
+  letter-spacing:1.5px;
+  text-transform:uppercase;
+  opacity:.75;
+  font-family:'Poppins',sans-serif;
+}
+
+.hero h1{
+  margin:2px 0 0;
+  font-size:30px;
+  font-weight:900;
+  line-height:1.2;
+}
+
+.hero-sub{
+  margin-top:6px;
+  opacity:.82;
+  font-size:14px;
+}
+
+.live-pill{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:9px 13px;
+  background:rgba(255,255,255,.13);
+  border:1px solid rgba(255,255,255,.15);
+  border-radius:999px;
+  font-size:12px;
+  white-space:nowrap;
+}
+
+.live-dot{
+  width:8px;
+  height:8px;
+  border-radius:50%;
+  background:#7fffd4;
+  box-shadow:0 0 0 4px rgba(127,255,212,.15);
+}
+
+.live-pill.bad .live-dot{
+  background:#ff8b8b;
+}
+
+.hero-stats{
+  position:relative;
+  z-index:1;
+  display:grid;
+  grid-template-columns:repeat(5,1fr);
+  gap:10px;
+  margin-top:28px;
+}
+
+.hero-stat{
+  padding:14px;
+  border-radius:16px;
+  background:rgba(255,255,255,.10);
+  border:1px solid rgba(255,255,255,.1);
+  backdrop-filter:blur(10px);
+}
+
+.hero-stat-value{
+  font-family:'Poppins',sans-serif;
+  font-size:23px;
+  font-weight:800;
+}
+
+.hero-stat-label{
+  font-size:11px;
+  opacity:.75;
+  margin-top:2px;
+}
+
+/* ================= TOOLBAR ================= */
+
+.toolbar{
+  display:flex;
+  gap:12px;
+  align-items:center;
+  justify-content:space-between;
+  margin:22px 0;
+}
+
+.search-box{
+  position:relative;
+  flex:1;
+  max-width:600px;
+}
+
+.search-box span{
+  position:absolute;
+  left:15px;
+  top:50%;
+  transform:translateY(-50%);
+  color:var(--muted);
+  font-size:18px;
+}
+
+.search-box input{
+  width:100%;
+  border:1px solid var(--line);
+  background:var(--surface);
+  padding:14px 16px 14px 46px;
+  border-radius:16px;
+  outline:none;
+  font-family:inherit;
+  font-size:14px;
+  transition:.2s;
+  box-shadow:0 4px 15px rgba(0,0,0,.02);
+}
+
+.search-box input:focus{
+  border-color:#c98b6c;
+  box-shadow:0 0 0 4px rgba(124,45,18,.08);
+}
+
+.action-group{
+  display:flex;
+  gap:8px;
+}
+
+.btn{
+  border:none;
+  border-radius:14px;
+  padding:13px 16px;
+  font-family:inherit;
+  font-size:13px;
+  font-weight:700;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
+  transition:.2s;
+}
+
+.btn:hover{
+  transform:translateY(-1px);
+}
+
+.btn:disabled{
+  opacity:.6;
+  cursor:not-allowed;
+  transform:none;
+}
+
+.btn-primary{
+  background:var(--primary);
+  color:white;
+  box-shadow:0 8px 18px rgba(124,45,18,.18);
+}
+
+.btn-primary:hover{
+  background:var(--primary-dark);
+}
+
+.btn-soft{
+  background:white;
+  border:1px solid var(--line);
+  color:var(--ink);
+}
+
+.btn-soft:hover{
+  background:#faf8f5;
+}
+
+.btn-poster{
+  background:#ea580c;
+  color:white;
+}
+
+.btn-poster:hover{
+  background:#c2410c;
+}
+
+/* ================= TABS ================= */
+
+.tabs{
+  display:flex;
+  gap:9px;
+  overflow-x:auto;
+  padding-bottom:8px;
+  margin-bottom:18px;
+  scrollbar-width:none;
+}
+
+.tabs::-webkit-scrollbar{
+  display:none;
+}
+
+.tab{
+  flex-shrink:0;
+  border:1px solid var(--line);
+  background:white;
+  color:var(--muted);
+  border-radius:16px;
+  padding:11px 15px;
+  font-family:inherit;
+  font-size:13px;
+  font-weight:700;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  transition:.2s;
+}
+
+.tab:hover{
+  border-color:#d4c9bd;
+  color:var(--ink);
+}
+
+.tab.active{
+  color:white;
+  background:var(--primary);
+  border-color:var(--primary);
+  box-shadow:0 8px 18px rgba(124,45,18,.15);
+}
+
+.tab-count{
+  min-width:22px;
+  height:22px;
+  padding:0 6px;
+  border-radius:999px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:#f0ece7;
+  color:var(--muted);
+  font-family:'Poppins',sans-serif;
+  font-size:10px;
+}
+
+.tab.active .tab-count{
+  background:rgba(255,255,255,.18);
+  color:white;
+}
+
+/* ================= SECTION ================= */
+
+.content-card{
+  background:rgba(255,255,255,.7);
+  border:1px solid rgba(232,227,220,.9);
+  border-radius:24px;
+  padding:18px;
+  box-shadow:var(--shadow);
+}
+
+.section-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin:2px 4px 18px;
+}
+
+.section-title{
+  font-size:17px;
+  font-weight:800;
+}
+
+.section-meta{
+  font-size:12px;
+  color:var(--muted);
+}
+
+/* ================= MEMBER GRID ================= */
+
+.member-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(310px,1fr));
+  gap:12px;
+}
+
+.member-card{
+  position:relative;
+  background:white;
+  border:1px solid var(--line);
+  border-radius:20px;
+  padding:16px;
+  transition:.2s;
+}
+
+.member-card:hover{
+  transform:translateY(-2px);
+  box-shadow:0 12px 28px rgba(0,0,0,.07);
+}
+
+.member-top{
+  display:flex;
+  gap:12px;
+  align-items:flex-start;
+}
+
+.avatar{
+  width:44px;
+  height:44px;
+  border-radius:15px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-shrink:0;
+  background:var(--primary-light);
+  color:var(--primary);
+  font-family:'Poppins',sans-serif;
+  font-weight:800;
+  font-size:15px;
+}
+
+.member-info{
+  flex:1;
+  min-width:0;
+}
+
+.member-name{
+  font-size:15px;
+  font-weight:800;
+  line-height:1.4;
+  word-break:break-word;
+}
+
+.member-id{
+  color:var(--muted);
+  font-family:'Poppins',sans-serif;
+  font-size:10px;
+  margin-top:2px;
+}
+
+.member-actions{
+  display:flex;
+  gap:5px;
+}
+
+.icon-btn{
+  width:34px;
+  height:34px;
+  border-radius:11px;
+  border:1px solid var(--line);
+  background:#fff;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:15px;
+  transition:.2s;
+}
+
+.icon-btn:hover{
+  background:var(--surface-soft);
+}
+
+.icon-btn.edit:hover{
+  border-color:#c98b6c;
+  color:var(--primary);
+}
+
+.icon-btn.delete:hover{
+  border-color:#fecaca;
+  background:var(--danger-soft);
+  color:var(--danger);
+}
+
+/* ================= MEMBER DETAILS ================= */
+
+.member-details{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:9px;
+  margin-top:15px;
+}
+
+.detail-box{
+  border-radius:14px;
+  padding:10px 11px;
+  border:1px solid var(--line);
+  background:var(--surface-soft);
+}
+
+.detail-label{
+  color:var(--muted);
+  font-size:10px;
+  margin-bottom:4px;
+}
+
+.detail-value{
+  font-weight:800;
+  font-size:13px;
+}
+
+.galli-1{
+  background:var(--galli1-soft);
+  border-color:#e3d8ff;
+}
+
+.galli-2{
+  background:var(--galli2-soft);
+  border-color:#ffd9c0;
+}
+
+.galli-3{
+  background:var(--galli3-soft);
+  border-color:#c8f2e1;
+}
+
+.galli-4{
+  background:var(--galli4-soft);
+  border-color:#ffd5e7;
+}
+
+.member-controls{
+  display:grid;
+  grid-template-columns:1.4fr 1fr;
+  gap:8px;
+  margin-top:12px;
+}
+
+.member-controls select,
+.member-controls input{
+  width:100%;
+  border:1px solid var(--line);
+  background:white;
+  border-radius:12px;
+  padding:10px 11px;
+  font-family:inherit;
+  font-size:12px;
+  outline:none;
+}
+
+.member-controls select:focus,
+.member-controls input:focus{
+  border-color:#c98b6c;
+  box-shadow:0 0 0 3px rgba(124,45,18,.07);
+}
+
+/* ================= COMMITTEE ================= */
+
+.committee-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(240px,1fr));
+  gap:12px;
+}
+
+.committee-card{
+  display:flex;
+  align-items:center;
+  gap:13px;
+  padding:16px;
+  background:white;
+  border:1px solid var(--line);
+  border-radius:18px;
+}
+
+.committee-icon{
+  width:46px;
+  height:46px;
+  border-radius:15px;
+  background:var(--gold-light);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:20px;
+}
+
+.committee-name{
+  font-weight:800;
+  font-size:14px;
+}
+
+.committee-role{
+  color:#b45309;
+  font-size:12px;
+  margin-top:3px;
+  font-weight:600;
+}
+
+/* ================= EMPTY ================= */
+
+.empty{
+  text-align:center;
+  padding:70px 20px;
+}
+
+.empty-icon{
+  font-size:45px;
+  margin-bottom:12px;
+}
+
+.empty h3{
+  margin:0;
+  font-size:17px;
+}
+
+.empty p{
+  margin:7px 0 0;
+  color:var(--muted);
+  font-size:13px;
+}
+
+/* ================= FAB ================= */
+
+.fab{
+  position:fixed;
+  right:24px;
+  bottom:24px;
+  border:none;
+  border-radius:18px;
+  padding:15px 19px;
+  background:var(--primary);
+  color:white;
+  box-shadow:0 15px 35px rgba(124,45,18,.3);
+  font-family:inherit;
+  font-weight:800;
+  font-size:14px;
+  cursor:pointer;
+  display:flex;
+  gap:8px;
+  align-items:center;
+  z-index:50;
+  transition:.2s;
+}
+
+.fab:hover{
+  transform:translateY(-3px);
+}
+
+/* ================= MODAL ================= */
+
+.modal-overlay{
+  position:fixed;
+  inset:0;
+  background:rgba(25,18,13,.45);
+  backdrop-filter:blur(5px);
+  z-index:100;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+}
+
+.modal-overlay.show{
+  display:flex;
+}
+
+.modal{
+  width:min(480px,100%);
+  background:white;
+  border-radius:26px;
+  padding:24px;
+  box-shadow:0 30px 80px rgba(0,0,0,.25);
+  animation:modalIn .22s ease;
+}
+
+@keyframes modalIn{
+  from{
+    opacity:0;
+    transform:translateY(15px) scale(.98);
   }
-  *{box-sizing:border-box;}
+  to{
+    opacity:1;
+    transform:translateY(0) scale(1);
+  }
+}
+
+.modal-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:22px;
+}
+
+.modal-title{
+  font-size:20px;
+  font-weight:900;
+}
+
+.close-btn{
+  border:none;
+  width:36px;
+  height:36px;
+  border-radius:12px;
+  background:#f5f3ef;
+  cursor:pointer;
+  font-size:17px;
+}
+
+.form-group{
+  margin-bottom:15px;
+}
+
+.form-label{
+  display:block;
+  font-size:12px;
+  font-weight:700;
+  margin-bottom:7px;
+}
+
+.form-control{
+  width:100%;
+  border:1px solid var(--line);
+  border-radius:13px;
+  padding:12px 13px;
+  font-family:inherit;
+  font-size:14px;
+  outline:none;
+}
+
+.form-control:focus{
+  border-color:#c98b6c;
+  box-shadow:0 0 0 4px rgba(124,45,18,.08);
+}
+
+.galli-picker{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:8px;
+}
+
+.galli-option{
+  border:1px solid var(--line);
+  background:white;
+  border-radius:13px;
+  padding:12px 5px;
+  cursor:pointer;
+  font-family:inherit;
+  font-size:12px;
+  font-weight:800;
+}
+
+.galli-option.active{
+  color:white;
+  background:var(--primary);
+  border-color:var(--primary);
+}
+
+.modal-actions{
+  display:flex;
+  justify-content:flex-end;
+  gap:9px;
+  margin-top:20px;
+}
+
+.delete-modal{
+  text-align:center;
+}
+
+.delete-icon{
+  width:65px;
+  height:65px;
+  margin:0 auto 15px;
+  border-radius:22px;
+  background:var(--danger-soft);
+  color:var(--danger);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:28px;
+}
+
+.delete-text{
+  color:var(--muted);
+  font-size:13px;
+  line-height:1.6;
+  margin-top:8px;
+}
+
+.delete-name{
+  font-weight:800;
+  color:var(--ink);
+}
+
+/* ================= TOAST ================= */
+
+.toast-container{
+  position:fixed;
+  top:20px;
+  right:20px;
+  z-index:200;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+.toast{
+  min-width:260px;
+  padding:14px 16px;
+  border-radius:15px;
+  background:#1f1b18;
+  color:white;
+  box-shadow:0 15px 35px rgba(0,0,0,.18);
+  font-size:13px;
+  animation:toastIn .25s ease;
+}
+
+.toast.success{
+  background:#047857;
+}
+
+.toast.error{
+  background:#b91c1c;
+}
+
+@keyframes toastIn{
+  from{
+    opacity:0;
+    transform:translateX(30px);
+  }
+  to{
+    opacity:1;
+    transform:translateX(0);
+  }
+}
+
+/* ================= POSTER ================= */
+
+#posterRoot{
+  position:absolute;
+  left:-99999px;
+  top:0;
+  width:1700px;
+}
+
+/* ================= MOBILE ================= */
+
+@media(max-width:900px){
+
+  .hero-stats{
+    grid-template-columns:repeat(3,1fr);
+  }
+
+  .hero-stat:last-child{
+    display:none;
+  }
+
+}
+
+@media(max-width:640px){
+
   body{
-    margin:0;
-    font-family:'Noto Sans', 'Segoe UI', Arial, sans-serif;
-    background:var(--bg);
-    color:var(--ink);
+    padding-bottom:100px;
+  }
+
+  .app{
+    padding:12px;
+  }
+
+  .hero{
+    border-radius:22px;
     padding:20px;
   }
-  h1{
-    font-size:20px;
-    margin:0 0 4px;
-    font-weight:700;
+
+  .hero-top{
+    flex-direction:column;
   }
-  .sub{
-    color:var(--muted);
-    font-size:13px;
-    margin-bottom:18px;
+
+  .brand{
+    align-items:flex-start;
   }
-  .tabs{
-    display:flex;
-    flex-wrap:wrap;
-    gap:6px;
-    margin-bottom:16px;
-    border-bottom:1px solid var(--line);
-    padding-bottom:10px;
+
+  .brand-icon{
+    width:52px;
+    height:52px;
+    border-radius:17px;
+    font-size:25px;
   }
-  .tab-btn{
-    border:1px solid var(--line);
-    background:var(--tab-bg);
-    color:var(--ink);
-    padding:8px 14px;
-    border-radius:8px;
-    font-size:14px;
-    cursor:pointer;
-    font-weight:600;
-    transition:all .15s;
+
+  .hero h1{
+    font-size:22px;
   }
-  .tab-btn:hover{ background:#e2ddd0; }
-  .tab-btn.active{
-    background:var(--accent);
-    color:#fff;
-    border-color:var(--accent);
-  }
-  .count{
-    font-weight:400;
-    opacity:.85;
-    margin-left:4px;
+
+  .hero-sub{
     font-size:12px;
   }
-  .list{
-    background:var(--panel);
-    border:1px solid var(--line);
-    border-radius:10px;
-    overflow:hidden;
+
+  .live-pill{
+    align-self:flex-start;
   }
-  .row{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:10px;
-    padding:11px 14px;
-    border-bottom:1px solid var(--line);
-    font-size:14px;
+
+  .hero-stats{
+    grid-template-columns:repeat(3,1fr);
+    gap:7px;
+    margin-top:20px;
   }
-  .row:last-child{ border-bottom:none; }
-  .row:nth-child(even){ background:#fbfaf7; }
-  .name{
-    flex:1;
-    min-width:0;
-    word-break:break-word;
+
+  .hero-stat{
+    padding:10px;
+    border-radius:13px;
   }
-  .badge{
+
+  .hero-stat-value{
+    font-size:18px;
+  }
+
+  .hero-stat-label{
+    font-size:9px;
+  }
+
+  .toolbar{
+    flex-direction:column;
+    align-items:stretch;
+  }
+
+  .action-group{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+  }
+
+  .btn{
+    padding:12px 8px;
     font-size:11px;
-    background:var(--accent-soft);
-    color:var(--accent);
-    padding:2px 8px;
+  }
+
+  .tabs{
+    margin-left:-2px;
+  }
+
+  .tab{
+    padding:10px 13px;
+    border-radius:14px;
+  }
+
+  .content-card{
+    padding:12px;
     border-radius:20px;
-    margin-left:8px;
-    font-weight:600;
-    white-space:nowrap;
   }
-  .select-wrap{
-    display:flex;
-    gap:4px;
-    flex-shrink:0;
-    align-items:center;
-  }
-  select{
-    font-size:13px;
-    padding:6px 8px;
-    border-radius:6px;
-    border:1px solid var(--line);
-    background:#fff;
-    color:var(--ink);
-    cursor:pointer;
-  }
-  .room-input{
-    width:64px;
-    font-size:13px;
-    padding:6px 6px;
-    border-radius:6px;
-    border:1px solid var(--line);
-    background:#fff;
-    color:var(--ink);
-    text-align:center;
-  }
-  .room-input::placeholder{ color:#b8b2a5; }
-  .empty{
-    padding:30px;
-    text-align:center;
-    color:var(--muted);
-    font-size:14px;
-  }
-  .top-row{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    flex-wrap:wrap;
-    gap:8px;
-  }
-  .status{
-    font-size:12px;
-    color:var(--muted);
-  }
-  .save-indicator{
-    font-size:12px;
-    color:var(--accent);
-    opacity:0;
-    transition:opacity .3s;
-  }
-  .save-indicator.show{ opacity:1; }
-  .export-btn{
-    border:none;
-    background:var(--accent);
-    color:#fff;
-    padding:10px 16px;
-    border-radius:8px;
-    font-size:13px;
-    font-weight:700;
-    cursor:pointer;
-    display:flex;
-    align-items:center;
-    gap:6px;
-  }
-  .export-btn:hover{ background:#265d41; }
-  .export-btn:disabled{
-    background:#b9b9b9;
-    cursor:not-allowed;
-  }
-  .poster-btn{
-    border:none;
-    background:#e65100;
-    color:#fff;
-    padding:10px 16px;
-    border-radius:8px;
-    font-size:13px;
-    font-weight:700;
-    cursor:pointer;
-    display:flex;
-    align-items:center;
-    gap:6px;
-  }
-  .poster-btn:hover{ background:#c64600; }
-  .poster-btn:disabled{
-    background:#b9b9b9;
-    cursor:not-allowed;
-  }
-  .header-actions{
-    display:flex;
-    align-items:center;
-    gap:12px;
-    flex-wrap:wrap;
-  }
-  .icon-btn{
-    border:1px solid var(--line);
-    background:#fff;
-    color:var(--muted);
-    width:30px;
-    height:30px;
-    border-radius:6px;
-    cursor:pointer;
-    font-size:14px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    flex-shrink:0;
-  }
-  .icon-btn:hover{ background:var(--accent-soft); color:var(--accent); border-color:var(--accent); }
-  .icon-btn.danger:hover{ background:#fbe9e7; color:#c0392b; border-color:#c0392b; }
-  .name-input{
-    flex:1;
-    font-size:14px;
-    padding:6px 8px;
-    border-radius:6px;
-    border:1px solid var(--accent);
-    font-family:inherit;
-  }
-  .add-row{
-    display:flex;
-    gap:8px;
-    padding:12px 14px;
-    background:#fbfaf7;
-    border-top:1px solid var(--line);
-  }
-  .add-row input{
-    flex:1;
-    font-size:14px;
-    padding:8px 10px;
-    border-radius:6px;
-    border:1px solid var(--line);
-    font-family:inherit;
-  }
-  .add-btn{
-    border:none;
-    background:var(--accent);
-    color:#fff;
-    padding:8px 16px;
-    border-radius:6px;
-    font-size:13px;
-    font-weight:700;
-    cursor:pointer;
-    white-space:nowrap;
-  }
-  .add-btn:hover{ background:#265d41; }
-  .conn-ok{ color:var(--accent); }
-  .conn-bad{ color:#c0392b; }
 
-  /* ===== MOBILE RESPONSIVE ===== */
-  @media (max-width: 640px){
-    body{ padding:12px; }
-    h1{ font-size:17px; line-height:1.3; }
-    .sub{ font-size:11.5px; line-height:1.5; }
-
-    .top-row{
-      flex-direction:column;
-      align-items:stretch;
-      gap:10px;
-    }
-    .header-actions{
-      width:100%;
-      justify-content:flex-start;
-      gap:8px;
-    }
-    .save-indicator{
-      order:-1;
-      width:100%;
-      text-align:left;
-    }
-    .poster-btn, .export-btn{
-      flex:1;
-      justify-content:center;
-      font-size:12px;
-      padding:11px 8px;
-      white-space:nowrap;
-    }
-
-    .tabs{
-      flex-wrap:nowrap;
-      overflow-x:auto;
-      -webkit-overflow-scrolling:touch;
-      scrollbar-width:none;
-      padding-bottom:12px;
-      margin-bottom:12px;
-    }
-    .tabs::-webkit-scrollbar{ display:none; }
-    .tab-btn{
-      flex-shrink:0;
-      font-size:13px;
-      padding:9px 12px;
-    }
-
-    .row{
-      flex-wrap:wrap;
-      align-items:flex-start;
-      padding:12px;
-      gap:8px;
-    }
-    .name{
-      width:100%;
-      flex:none;
-      font-size:15px;
-    }
-    .select-wrap{
-      width:100%;
-      flex-wrap:wrap;
-      gap:8px;
-    }
-    select{
-      flex:1;
-      min-width:0;
-      font-size:14px;
-      padding:9px 8px;
-    }
-    .room-input{
-      width:80px;
-      font-size:14px;
-      padding:9px 6px;
-    }
-    .icon-btn{
-      width:38px;
-      height:38px;
-      font-size:16px;
-    }
-    .name-input{
-      font-size:15px;
-      padding:9px 10px;
-    }
-
-    .add-row{
-      flex-direction:column;
-      gap:8px;
-    }
-    .add-row input{
-      font-size:15px;
-      padding:10px 10px;
-    }
-    .add-btn{
-      width:100%;
-      padding:11px;
-      font-size:14px;
-    }
-
-    .badge{
-      display:block;
-      margin:6px 0 0 0;
-      width:fit-content;
-    }
+  .section-head{
+    margin:4px 5px 14px;
   }
+
+  .member-grid{
+    grid-template-columns:1fr;
+    gap:9px;
+  }
+
+  .member-card{
+    padding:14px;
+    border-radius:18px;
+  }
+
+  .member-controls{
+    grid-template-columns:1.3fr 1fr;
+  }
+
+  .fab{
+    right:16px;
+    bottom:16px;
+    border-radius:17px;
+    padding:15px 17px;
+  }
+
+  .modal-overlay{
+    align-items:flex-end;
+    padding:0;
+  }
+
+  .modal{
+    width:100%;
+    border-radius:26px 26px 0 0;
+    padding:22px;
+  }
+
+  .toast-container{
+    top:12px;
+    right:12px;
+    left:12px;
+  }
+
+  .toast{
+    min-width:auto;
+    width:100%;
+  }
+}
 </style>
 </head>
+
 <body>
 
-<div class="top-row">
-  <div>
-    <h1>Mangal Murti Chawl सदस्य व्यवस्थापन</h1>
-    <div class="sub">प्रत्येक सदस्य के आगे से Galli और रूम नंबर चुनें। ऊपर के टैब से सूची देखें। <span id="connStatus"></span></div>
+<div class="app">
+
+  <!-- ================= HEADER ================= -->
+
+  <header class="hero">
+
+    <div class="hero-top">
+
+      <div class="brand">
+
+        <div class="brand-icon">🏠</div>
+
+        <div>
+          <div class="hero-eyebrow">MANGAL MURTI CHAWL</div>
+          <h1>सदस्य व्यवस्थापन</h1>
+          <div class="hero-sub">
+            रहिवासी, गल्ली आणि रूम नंबर व्यवस्थापन
+          </div>
+        </div>
+
+      </div>
+
+      <div class="live-pill" id="connStatus">
+        <span class="live-dot"></span>
+        <span>कनेक्ट होत आहे...</span>
+      </div>
+
+    </div>
+
+    <div class="hero-stats">
+
+      <div class="hero-stat">
+        <div class="hero-stat-value" id="totalStat">0</div>
+        <div class="hero-stat-label">एकूण सदस्य</div>
+      </div>
+
+      <div class="hero-stat">
+        <div class="hero-stat-value" id="g1Stat">0</div>
+        <div class="hero-stat-label">गल्ली १</div>
+      </div>
+
+      <div class="hero-stat">
+        <div class="hero-stat-value" id="g2Stat">0</div>
+        <div class="hero-stat-label">गल्ली २</div>
+      </div>
+
+      <div class="hero-stat">
+        <div class="hero-stat-value" id="g3Stat">0</div>
+        <div class="hero-stat-label">गल्ली ३</div>
+      </div>
+
+      <div class="hero-stat">
+        <div class="hero-stat-value" id="g4Stat">0</div>
+        <div class="hero-stat-label">गल्ली ४</div>
+      </div>
+
+    </div>
+
+  </header>
+
+
+  <!-- ================= TOOLBAR ================= -->
+
+  <div class="toolbar">
+
+    <div class="search-box">
+      <span>⌕</span>
+      <input
+        type="text"
+        id="searchInput"
+        placeholder="सदस्य, रूम नंबर किंवा गल्ली शोधा..."
+        oninput="renderList()"
+      >
+    </div>
+
+    <div class="action-group">
+
+      <button class="btn btn-poster" id="posterBtn" onclick="generatePoster()">
+        🖼 पोस्टर
+      </button>
+
+      <button class="btn btn-soft" id="exportBtn" onclick="exportToExcel()">
+        ⬇ Excel
+      </button>
+
+    </div>
+
   </div>
-  <div class="header-actions">
-    <div class="save-indicator" id="saveIndicator">✓ Saved</div>
-    <button class="poster-btn" id="posterBtn" onclick="generatePoster()">🖼 पोस्टर बनाएं</button>
-    <button class="export-btn" id="exportBtn" onclick="exportToExcel()">⬇ Excel में निर्यात करें</button>
+
+
+  <!-- ================= TABS ================= -->
+
+  <div class="tabs" id="tabs"></div>
+
+
+  <!-- ================= CONTENT ================= -->
+
+  <div class="content-card">
+
+    <div class="section-head">
+      <div class="section-title" id="sectionTitle">सर्व सदस्य</div>
+      <div class="section-meta" id="sectionMeta">0 सदस्य</div>
+    </div>
+
+    <div id="list"></div>
+
   </div>
+
 </div>
 
-<div class="tabs" id="tabs"></div>
-<div class="list" id="list"></div>
 
-<!-- Hidden off-screen container used to render the poster before capturing it as an image -->
-<div id="posterRoot" style="position:absolute; left:-99999px; top:0; width:1700px;"></div>
+<!-- ================= FLOATING ADD BUTTON ================= -->
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<button class="fab" onclick="openAddModal()">
+  <span>＋</span>
+  सदस्य जोडा
+</button>
+
+
+<!-- ================= ADD / EDIT MODAL ================= -->
+
+<div class="modal-overlay" id="memberModal">
+
+  <div class="modal">
+
+    <div class="modal-header">
+
+      <div class="modal-title" id="memberModalTitle">
+        नवीन सदस्य
+      </div>
+
+      <button class="close-btn" onclick="closeMemberModal()">✕</button>
+
+    </div>
+
+    <div class="form-group">
+
+      <label class="form-label">सदस्याचे नाव</label>
+
+      <input
+        id="memberNameInput"
+        class="form-control"
+        placeholder="पूर्ण नाव लिहा..."
+        autocomplete="off"
+      >
+
+    </div>
+
+    <div class="form-group">
+
+      <label class="form-label">गल्ली निवडा</label>
+
+      <div class="galli-picker">
+
+        <button class="galli-option" data-galli="" onclick="selectModalGalli('')">
+          नाही
+        </button>
+
+        <button class="galli-option" data-galli="1" onclick="selectModalGalli('1')">
+          गल्ली १
+        </button>
+
+        <button class="galli-option" data-galli="2" onclick="selectModalGalli('2')">
+          गल्ली २
+        </button>
+
+        <button class="galli-option" data-galli="3" onclick="selectModalGalli('3')">
+          गल्ली ३
+        </button>
+
+        <button class="galli-option" data-galli="4" onclick="selectModalGalli('4')">
+          गल्ली ४
+        </button>
+
+      </div>
+
+    </div>
+
+    <div class="form-group">
+
+      <label class="form-label">रूम नंबर</label>
+
+      <input
+        id="memberRoomInput"
+        class="form-control"
+        placeholder="उदा. 12"
+        autocomplete="off"
+      >
+
+    </div>
+
+    <div class="modal-actions">
+
+      <button class="btn btn-soft" onclick="closeMemberModal()">
+        रद्द करा
+      </button>
+
+      <button class="btn btn-primary" id="memberSaveBtn" onclick="saveMemberModal()">
+        ✓ सेव्ह करा
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
+
+
+<!-- ================= DELETE MODAL ================= -->
+
+<div class="modal-overlay" id="deleteModal">
+
+  <div class="modal delete-modal">
+
+    <div class="delete-icon">🗑</div>
+
+    <div class="modal-title">
+      सदस्य हटवायचा आहे?
+    </div>
+
+    <div class="delete-text">
+      <span class="delete-name" id="deleteMemberName"></span>
+      <br>
+      हा सदस्य सूचीमधून कायमचा हटवला जाईल.
+    </div>
+
+    <div class="modal-actions" style="justify-content:center; margin-top:25px;">
+
+      <button class="btn btn-soft" onclick="closeDeleteModal()">
+        रद्द करा
+      </button>
+
+      <button class="btn" style="background:#dc2626;color:white;" onclick="confirmDelete()">
+        🗑 हटवा
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
+
+
+<!-- ================= TOAST ================= -->
+
+<div class="toast-container" id="toastContainer"></div>
+
+
+<!-- Hidden poster root -->
+
+<div id="posterRoot"></div>
+
+
 <script>
-// ====== SUPABASE CONFIG ======
-const SUPABASE_URL = "https://dtgwxfibkurjbgutlcxw.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_y6lWbqtfNnuiDijfWxeCTw_eyAcPwZG";
-// ==============================================
+
+/* =====================================================
+   SUPABASE CONFIG
+===================================================== */
+
+const SUPABASE_URL =
+  "https://dtgwxfibkurjbgutlcxw.supabase.co";
+
+const SUPABASE_ANON_KEY =
+  "sb_publishable_y6lWbqtfNnuiDijfWxeCTw_eyAcPwZG";
+
+
+/* =====================================================
+   GLOBAL STATE
+===================================================== */
 
 let sb = null;
-let MEMBERS = []; // array of {id, name, galli, room_no}
-let currentTab = "unassigned";
-let editingId = null; // id of member currently being edited
+
+let MEMBERS = [];
+
+let currentTab = "all";
+
+let modalMode = "add";
+
+let editingMember = null;
+
+let modalSelectedGalli = "";
+
+let deletingMember = null;
+
+
+/* =====================================================
+   TABS
+===================================================== */
 
 const TABS = [
-  {id:"unassigned", label:"निवड नाही"},
-  {id:"all", label:"सर्व"},
-  {id:"1", label:"गल्ली 1"},
-  {id:"2", label:"गल्ली 2"},
-  {id:"3", label:"गल्ली 3"},
-  {id:"4", label:"गल्ली 4"},
-  {id:"committee", label:"समिती"}
+
+  { id:"all", label:"सर्व", icon:"👥" },
+
+  { id:"unassigned", label:"निवड नाही", icon:"⏳" },
+
+  { id:"1", label:"गल्ली १", icon:"🟣" },
+
+  { id:"2", label:"गल्ली २", icon:"🟠" },
+
+  { id:"3", label:"गल्ली ३", icon:"🟢" },
+
+  { id:"4", label:"गल्ली ४", icon:"🔴" },
+
+  { id:"committee", label:"समिती", icon:"⭐" }
+
 ];
+
+
+/* =====================================================
+   COMMITTEE
+===================================================== */
 
 const COMMITTEE = [
-  {name:"सतीश नलावडे", role:"अध्यक्ष"},
-  {name:"निलेश शिंदे", role:"उपाध्यक्ष"},
-  {name:"सूरज विनोद तिवारी", role:"उपाध्यक्ष"},
-  {name:"राहुल साहेबराव पाटील", role:"सचिव"},
-  {name:"महेंद्र वाडेकर", role:"उपसचिव"},
-  {name:"राकेश बागल", role:"खजिनदार"},
-  {name:"राकेश जानवळकर", role:"उपखजिनदार"},
-  {name:"महादेव बामणकर", role:"सदस्य"},
-  {name:"निराज पांडेय", role:"सदस्य"},
-  {name:"धर्मेश ईश्वरप्रसाद मिश्र", role:"सदस्य"}
+
+  {
+    name:"सतीश नलावडे",
+    role:"अध्यक्ष"
+  },
+
+  {
+    name:"निलेश शिंदे",
+    role:"उपाध्यक्ष"
+  },
+
+  {
+    name:"सूरज विनोद तिवारी",
+    role:"उपाध्यक्ष"
+  },
+
+  {
+    name:"राहुल साहेबराव पाटील",
+    role:"सचिव"
+  },
+
+  {
+    name:"महेंद्र वाडेकर",
+    role:"उपसचिव"
+  },
+
+  {
+    name:"राकेश बागल",
+    role:"खजिनदार"
+  },
+
+  {
+    name:"राकेश जानवळकर",
+    role:"उपखजिनदार"
+  },
+
+  {
+    name:"महादेव बामणकर",
+    role:"सदस्य"
+  },
+
+  {
+    name:"निराज पांडेय",
+    role:"सदस्य"
+  },
+
+  {
+    name:"धर्मेश ईश्वरप्रसाद मिश्र",
+    role:"सदस्य"
+  }
+
 ];
 
-function setConnStatus(ok, msg){
-  const el = document.getElementById('connStatus');
-  el.className = ok ? 'conn-ok' : 'conn-bad';
-  el.textContent = msg;
+
+/* =====================================================
+   TOAST
+===================================================== */
+
+function showToast(message, type="success"){
+
+  const container =
+    document.getElementById("toastContainer");
+
+  const toast =
+    document.createElement("div");
+
+  toast.className =
+    "toast " + type;
+
+  toast.textContent =
+    message;
+
+  container.appendChild(toast);
+
+  setTimeout(() => {
+
+    toast.style.opacity = "0";
+    toast.style.transform = "translateX(30px)";
+
+    setTimeout(() => {
+
+      toast.remove();
+
+    },300);
+
+  },2500);
+
 }
 
-function showSaved(){
-  const ind = document.getElementById('saveIndicator');
-  ind.classList.add('show');
-  setTimeout(()=>ind.classList.remove('show'), 900);
+
+/* =====================================================
+   CONNECTION STATUS
+===================================================== */
+
+function setConnStatus(ok, message){
+
+  const el =
+    document.getElementById("connStatus");
+
+  el.className =
+    "live-pill" + (ok ? "" : " bad");
+
+  el.innerHTML = `
+    <span class="live-dot"></span>
+    <span>${message}</span>
+  `;
+
 }
+
+
+/* =====================================================
+   INIT
+===================================================== */
 
 async function init(){
-  if(!SUPABASE_URL.startsWith('http') || SUPABASE_ANON_KEY === "YOUR_SUPABASE_ANON_KEY"){
-    setConnStatus(false, '⚠ Supabase कॉन्फ़िगर नहीं है — कोड में SUPABASE_URL और SUPABASE_ANON_KEY भरें');
-    render();
+
+  if(typeof window.supabase === "undefined"){
+
+    setConnStatus(
+      false,
+      "कनेक्शन उपलब्ध नाही"
+    );
+
     return;
+
   }
-  if(typeof window.supabase === 'undefined'){
-    setConnStatus(false, '⚠ Supabase लाइब्रेरी लोड नहीं हो पाई (CDN ब्लॉक हो सकता है)');
-    render();
-    return;
-  }
+
   try{
-    sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-  }catch(e){
-    console.error(e);
-    setConnStatus(false, '⚠ कनेक्शन शुरू नहीं हो सका: ' + (e.message || e));
-    render();
-    return;
-  }
-  await loadMembers();
-  try{
+
+    sb =
+      window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_ANON_KEY
+      );
+
+    await loadMembers();
+
     subscribeRealtime();
-  }catch(e){
-    console.error('Realtime subscribe failed', e);
+
   }
+
+  catch(error){
+
+    console.error(error);
+
+    setConnStatus(
+      false,
+      "कनेक्शन अयशस्वी"
+    );
+
+  }
+
 }
+
+
+/* =====================================================
+   LOAD MEMBERS
+===================================================== */
 
 async function loadMembers(){
+
   try{
-    const { data, error } = await sb
-      .from('galli_members')
-      .select('id, name, galli, room_no')
-      .order('created_at', { ascending: true });
-    if(error) throw error;
-    MEMBERS = data || [];
-    setConnStatus(true, '● लाइव सिंक चालू');
-  }catch(e){
-    console.error(e);
-    setConnStatus(false, '⚠ डेटा लोड नहीं हो सका: ' + (e.message || e));
+
+    const {
+      data,
+      error
+    } = await sb
+
+      .from("galli_members")
+
+      .select(
+        "id, name, galli, room_no"
+      )
+
+      .order(
+        "created_at",
+        {
+          ascending:true
+        }
+      );
+
+
+    if(error)
+      throw error;
+
+
+    MEMBERS =
+      data || [];
+
+
+    setConnStatus(
+      true,
+      "लाइव्ह सिंक सुरू"
+    );
+
+
+    updateStats();
+
+    render();
+
   }
-  render();
+
+  catch(error){
+
+    console.error(error);
+
+    setConnStatus(
+      false,
+      "डेटा लोड झाला नाही"
+    );
+
+    showToast(
+      "डेटा लोड झाला नाही",
+      "error"
+    );
+
+  }
+
 }
+
+
+/* =====================================================
+   REALTIME
+===================================================== */
 
 function subscribeRealtime(){
+
   sb
-    .channel('galli_members_changes')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'galli_members' }, () => {
-      loadMembers();
-    })
+
+    .channel(
+      "galli_members_changes"
+    )
+
+    .on(
+
+      "postgres_changes",
+
+      {
+        event:"*",
+        schema:"public",
+        table:"galli_members"
+      },
+
+      () => {
+
+        loadMembers();
+
+      }
+
+    )
+
     .subscribe();
+
 }
+
+
+/* =====================================================
+   STATS
+===================================================== */
+
+function updateStats(){
+
+  document.getElementById("totalStat")
+    .textContent =
+    MEMBERS.length;
+
+
+  document.getElementById("g1Stat")
+    .textContent =
+    MEMBERS.filter(
+      m => m.galli === "1"
+    ).length;
+
+
+  document.getElementById("g2Stat")
+    .textContent =
+    MEMBERS.filter(
+      m => m.galli === "2"
+    ).length;
+
+
+  document.getElementById("g3Stat")
+    .textContent =
+    MEMBERS.filter(
+      m => m.galli === "3"
+    ).length;
+
+
+  document.getElementById("g4Stat")
+    .textContent =
+    MEMBERS.filter(
+      m => m.galli === "4"
+    ).length;
+
+}
+
+
+/* =====================================================
+   COUNT
+===================================================== */
 
 function countFor(tabId){
-  if(tabId === "all") return MEMBERS.length;
-  if(tabId === "unassigned") return MEMBERS.filter(m => !m.galli).length;
-  if(tabId === "committee") return COMMITTEE.length;
-  return MEMBERS.filter(m => m.galli === tabId).length;
+
+  if(tabId === "all")
+    return MEMBERS.length;
+
+
+  if(tabId === "unassigned")
+    return MEMBERS.filter(
+      m => !m.galli
+    ).length;
+
+
+  if(tabId === "committee")
+    return COMMITTEE.length;
+
+
+  return MEMBERS.filter(
+    m => m.galli === tabId
+  ).length;
+
 }
+
+
+/* =====================================================
+   SORT BY ROOM
+===================================================== */
+
+function sortByRoom(members){
+
+  return [...members].sort(
+    (a,b) => {
+
+      const ra =
+        (a.room_no || "")
+        .toString()
+        .trim();
+
+      const rb =
+        (b.room_no || "")
+        .toString()
+        .trim();
+
+
+      if(!ra && !rb)
+        return 0;
+
+      if(!ra)
+        return 1;
+
+      if(!rb)
+        return -1;
+
+
+      const na =
+        parseFloat(ra);
+
+      const nb =
+        parseFloat(rb);
+
+
+      if(
+        !isNaN(na) &&
+        !isNaN(nb) &&
+        na !== nb
+      ){
+
+        return na - nb;
+
+      }
+
+
+      return ra.localeCompare(
+        rb,
+        "hi",
+        {
+          numeric:true
+        }
+      );
+
+    }
+
+  );
+
+}
+
+
+/* =====================================================
+   RENDER TABS
+===================================================== */
 
 function renderTabs(){
-  const tabsEl = document.getElementById('tabs');
+
+  const tabsEl =
+    document.getElementById("tabs");
+
   tabsEl.innerHTML = "";
-  TABS.forEach(t => {
-    const btn = document.createElement('button');
-    btn.className = 'tab-btn' + (currentTab === t.id ? ' active' : '');
-    btn.innerHTML = `${t.label}<span class="count">(${countFor(t.id)})</span>`;
-    btn.onclick = () => { currentTab = t.id; render(); };
-    tabsEl.appendChild(btn);
+
+
+  TABS.forEach(tab => {
+
+    const button =
+      document.createElement("button");
+
+
+    button.className =
+      "tab" +
+      (
+        currentTab === tab.id
+          ? " active"
+          : ""
+      );
+
+
+    button.innerHTML = `
+      <span>${tab.icon}</span>
+      <span>${tab.label}</span>
+      <span class="tab-count">
+        ${countFor(tab.id)}
+      </span>
+    `;
+
+
+    button.onclick = () => {
+
+      currentTab =
+        tab.id;
+
+      render();
+
+    };
+
+
+    tabsEl.appendChild(button);
+
   });
+
 }
 
-// Sort helper: ascending by room number. Numeric-aware, blanks go last.
-function sortByRoom(members){
-  return [...members].sort((a,b) => {
-    const ra = (a.room_no || '').toString().trim();
-    const rb = (b.room_no || '').toString().trim();
-    if(!ra && !rb) return 0;
-    if(!ra) return 1;
-    if(!rb) return -1;
-    const na = parseFloat(ra), nb = parseFloat(rb);
-    if(!isNaN(na) && !isNaN(nb) && na !== nb) return na - nb;
-    return ra.localeCompare(rb, 'hi', {numeric:true});
-  });
-}
 
-function renderList(){
-  const listEl = document.getElementById('list');
+/* =====================================================
+   GET FILTERED MEMBERS
+===================================================== */
 
-  if(currentTab === "committee"){
-    listEl.innerHTML = "";
-    COMMITTEE.forEach(person => {
-      const row = document.createElement('div');
-      row.className = 'row';
-
-      const nameEl = document.createElement('div');
-      nameEl.className = 'name';
-      nameEl.textContent = person.name;
-      const badge = document.createElement('span');
-      badge.className = 'badge';
-      badge.textContent = person.role;
-      nameEl.appendChild(badge);
-
-      row.appendChild(nameEl);
-      listEl.appendChild(row);
-    });
-    return;
-  }
+function getCurrentMembers(){
 
   let members;
-  if(currentTab === "all") members = MEMBERS;
-  else if(currentTab === "unassigned") members = MEMBERS.filter(m => !m.galli);
-  else members = MEMBERS.filter(m => m.galli === currentTab);
 
-  // Sort ascending by room number when viewing a specific galli tab
-  if(["1","2","3","4"].includes(currentTab)){
-    members = sortByRoom(members);
+
+  if(currentTab === "all"){
+
+    members =
+      [...MEMBERS];
+
   }
+
+  else if(currentTab === "unassigned"){
+
+    members =
+      MEMBERS.filter(
+        m => !m.galli
+      );
+
+  }
+
+  else{
+
+    members =
+      MEMBERS.filter(
+        m => m.galli === currentTab
+      );
+
+  }
+
+
+  if(
+    ["1","2","3","4"]
+    .includes(currentTab)
+  ){
+
+    members =
+      sortByRoom(members);
+
+  }
+
+
+  const query =
+    document
+      .getElementById("searchInput")
+      .value
+      .trim()
+      .toLowerCase();
+
+
+  if(query){
+
+    members =
+      members.filter(member => {
+
+        const searchable = [
+
+          member.name,
+
+          member.room_no || "",
+
+          member.galli
+            ? "galli " + member.galli
+            : "",
+
+          member.galli
+            ? "गल्ली " + member.galli
+            : ""
+
+        ]
+
+        .join(" ")
+
+        .toLowerCase();
+
+
+        return searchable.includes(query);
+
+      });
+
+  }
+
+
+  return members;
+
+}
+
+
+/* =====================================================
+   RENDER LIST
+===================================================== */
+
+function renderList(){
+
+  const listEl =
+    document.getElementById("list");
+
+
+  const titleEl =
+    document.getElementById("sectionTitle");
+
+  const metaEl =
+    document.getElementById("sectionMeta");
+
+
+  /* ---------- COMMITTEE ---------- */
+
+  if(currentTab === "committee"){
+
+    titleEl.textContent =
+      "पदाधिकारी समिती";
+
+    metaEl.textContent =
+      COMMITTEE.length + " सदस्य";
+
+
+    listEl.innerHTML =
+      `<div class="committee-grid"></div>`;
+
+
+    const grid =
+      listEl.querySelector(
+        ".committee-grid"
+      );
+
+
+    COMMITTEE.forEach(person => {
+
+      const card =
+        document.createElement("div");
+
+      card.className =
+        "committee-card";
+
+      card.innerHTML = `
+
+        <div class="committee-icon">
+          ⭐
+        </div>
+
+        <div>
+
+          <div class="committee-name">
+            ${escapeHTML(person.name)}
+          </div>
+
+          <div class="committee-role">
+            ${escapeHTML(person.role)}
+          </div>
+
+        </div>
+
+      `;
+
+
+      grid.appendChild(card);
+
+    });
+
+
+    return;
+
+  }
+
+
+  const members =
+    getCurrentMembers();
+
+
+  const currentTabObject =
+    TABS.find(
+      t => t.id === currentTab
+    );
+
+
+  titleEl.textContent =
+    currentTabObject
+      ? currentTabObject.label + " सदस्य"
+      : "सदस्य";
+
+
+  metaEl.textContent =
+    members.length + " सदस्य";
+
+
+  if(!members.length){
+
+    listEl.innerHTML = `
+
+      <div class="empty">
+
+        <div class="empty-icon">
+          👥
+        </div>
+
+        <h3>
+          येथे कोणताही सदस्य नाही
+        </h3>
+
+        <p>
+          नवीन सदस्य जोडण्यासाठी खालील बटण वापरा.
+        </p>
+
+      </div>
+
+    `;
+
+    return;
+
+  }
+
+
+  const grid =
+    document.createElement("div");
+
+  grid.className =
+    "member-grid";
+
+
+  members.forEach(member => {
+
+    grid.appendChild(
+      createMemberCard(member)
+    );
+
+  });
+
 
   listEl.innerHTML = "";
 
-  if(members.length === 0){
-    const empty = document.createElement('div');
-    empty.className = 'empty';
-    empty.textContent = 'इस टैब में कोई सदस्य नहीं है';
-    listEl.appendChild(empty);
+  listEl.appendChild(grid);
+
+}
+
+
+/* =====================================================
+   CREATE MEMBER CARD
+===================================================== */
+
+function createMemberCard(member){
+
+  const card =
+    document.createElement("div");
+
+  card.className =
+    "member-card";
+
+
+  const initial =
+    member.name
+      ? member.name.trim().charAt(0)
+      : "?"
+
+
+  let galliClass =
+    "";
+
+  if(member.galli){
+
+    galliClass =
+      "galli-" + member.galli;
+
   }
 
-  members.forEach(member => {
-    const row = document.createElement('div');
-    row.className = 'row';
 
-    if(editingId === member.id){
-      const input = document.createElement('input');
-      input.className = 'name-input';
-      input.value = member.name;
-      row.appendChild(input);
+  card.innerHTML = `
 
-      const saveBtn = document.createElement('button');
-      saveBtn.className = 'icon-btn';
-      saveBtn.title = 'सेव करें';
-      saveBtn.textContent = '✓';
-      saveBtn.onclick = () => commitEdit(member, input.value);
-      row.appendChild(saveBtn);
+    <div class="member-top">
 
-      const cancelBtn = document.createElement('button');
-      cancelBtn.className = 'icon-btn';
-      cancelBtn.title = 'रद्द करें';
-      cancelBtn.textContent = '✕';
-      cancelBtn.onclick = () => { editingId = null; render(); };
-      row.appendChild(cancelBtn);
+      <div class="avatar">
+        ${escapeHTML(initial)}
+      </div>
 
-      input.onkeydown = (e) => {
-        if(e.key === 'Enter') commitEdit(member, input.value);
-        if(e.key === 'Escape'){ editingId = null; render(); }
-      };
-      listEl.appendChild(row);
-      input.focus();
-      input.select();
-      return;
-    }
 
-    const nameEl = document.createElement('div');
-    nameEl.className = 'name';
-    nameEl.textContent = member.name;
-    if(member.galli){
-      const badge = document.createElement('span');
-      badge.className = 'badge';
-      badge.textContent = 'गल्ली ' + member.galli + (member.room_no ? ' · रूम ' + member.room_no : '');
-      nameEl.appendChild(badge);
-    }
+      <div class="member-info">
 
-    const selectWrap = document.createElement('div');
-    selectWrap.className = 'select-wrap';
+        <div class="member-name">
+          ${escapeHTML(member.name)}
+        </div>
 
-    const select = document.createElement('select');
-    const options = [
-      {v:"", l:"निवड नाही"},
-      {v:"1", l:"गल्ली 1"},
-      {v:"2", l:"गल्ली 2"},
-      {v:"3", l:"गल्ली 3"},
-      {v:"4", l:"गल्ली 4"}
-    ];
-    options.forEach(o => {
-      const opt = document.createElement('option');
-      opt.value = o.v;
-      opt.textContent = o.l;
-      if((member.galli || "") === o.v) opt.selected = true;
-      select.appendChild(opt);
-    });
-    select.onchange = async (e) => {
-      await updateGalli(member, e.target.value || null);
+        <div class="member-id">
+          MEMBER
+        </div>
+
+      </div>
+
+
+      <div class="member-actions">
+
+        <button
+          class="icon-btn edit"
+          title="संपादित करा"
+        >
+          ✎
+        </button>
+
+
+        <button
+          class="icon-btn delete"
+          title="हटवा"
+        >
+          🗑
+        </button>
+
+      </div>
+
+    </div>
+
+
+    <div class="member-details">
+
+      <div class="detail-box ${galliClass}">
+
+        <div class="detail-label">
+          गल्ली
+        </div>
+
+        <div class="detail-value">
+          ${
+            member.galli
+              ? "गल्ली " + member.galli
+              : "निवड नाही"
+          }
+        </div>
+
+      </div>
+
+
+      <div class="detail-box">
+
+        <div class="detail-label">
+          रूम नंबर
+        </div>
+
+        <div class="detail-value">
+          ${
+            member.room_no
+              ? escapeHTML(member.room_no)
+              : "—"
+          }
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <div class="member-controls">
+
+      <select>
+
+        <option value="">
+          निवड नाही
+        </option>
+
+        <option value="1">
+          गल्ली १
+        </option>
+
+        <option value="2">
+          गल्ली २
+        </option>
+
+        <option value="3">
+          गल्ली ३
+        </option>
+
+        <option value="4">
+          गल्ली ४
+        </option>
+
+      </select>
+
+
+      <input
+        type="text"
+        placeholder="रूम नं."
+        value="${escapeAttribute(member.room_no || "")}"
+      >
+
+    </div>
+
+  `;
+
+
+  const buttons =
+    card.querySelectorAll("button");
+
+
+  buttons[0].onclick = () =>
+    openEditModal(member);
+
+
+  buttons[1].onclick = () =>
+    openDeleteModal(member);
+
+
+  const select =
+    card.querySelector("select");
+
+
+  select.value =
+    member.galli || "";
+
+
+  select.onchange =
+    async event => {
+
+      await updateGalli(
+        member,
+        event.target.value || null
+      );
+
     };
-    selectWrap.appendChild(select);
 
-    const roomInput = document.createElement('input');
-    roomInput.className = 'room-input';
-    roomInput.type = 'text';
-    roomInput.placeholder = 'रूम नं.';
-    roomInput.value = member.room_no || '';
-    roomInput.onblur = (e) => {
-      const val = e.target.value.trim();
-      if(val !== (member.room_no || '')) updateRoom(member, val || null);
+
+  const roomInput =
+    card.querySelector("input");
+
+
+  roomInput.onblur =
+    async event => {
+
+      const value =
+        event.target.value.trim();
+
+
+      if(
+        value !==
+        (member.room_no || "")
+      ){
+
+        await updateRoom(
+          member,
+          value || null
+        );
+
+      }
+
     };
-    roomInput.onkeydown = (e) => {
-      if(e.key === 'Enter') e.target.blur();
+
+
+  roomInput.onkeydown =
+    event => {
+
+      if(event.key === "Enter"){
+
+        event.target.blur();
+
+      }
+
     };
-    selectWrap.appendChild(roomInput);
 
-    const editBtn = document.createElement('button');
-    editBtn.className = 'icon-btn';
-    editBtn.title = 'नाम बदलें';
-    editBtn.textContent = '✎';
-    editBtn.onclick = () => { editingId = member.id; render(); };
 
-    const delBtn = document.createElement('button');
-    delBtn.className = 'icon-btn danger';
-    delBtn.title = 'हटाएं';
-    delBtn.textContent = '🗑';
-    delBtn.onclick = () => deleteMember(member);
+  return card;
 
-    row.appendChild(nameEl);
-    row.appendChild(selectWrap);
-    row.appendChild(editBtn);
-    row.appendChild(delBtn);
-    listEl.appendChild(row);
-  });
-
-  const addRow = document.createElement('div');
-  addRow.className = 'add-row';
-  const addInput = document.createElement('input');
-  addInput.placeholder = 'नया सदस्य नाम लिखें...';
-  addInput.id = 'newMemberInput';
-  const addBtn = document.createElement('button');
-  addBtn.className = 'add-btn';
-  addBtn.textContent = '+ सदस्य जोड़ें';
-  addBtn.onclick = addMember;
-  addInput.onkeydown = (e) => { if(e.key === 'Enter') addMember(); };
-  addRow.appendChild(addInput);
-  addRow.appendChild(addBtn);
-  listEl.appendChild(addRow);
 }
 
-async function updateGalli(member, galli){
-  if(!sb) return;
-  try{
-    const { error } = await sb
-      .from('galli_members')
-      .update({ galli })
-      .eq('id', member.id);
-    if(error) throw error;
-    member.galli = galli;
-    showSaved();
-    render();
-  }catch(e){
-    alert('अपडेट नहीं हो सका: ' + (e.message || e));
-  }
-}
 
-async function updateRoom(member, room_no){
-  if(!sb) return;
-  try{
-    const { error } = await sb
-      .from('galli_members')
-      .update({ room_no })
-      .eq('id', member.id);
-    if(error) throw error;
-    member.room_no = room_no;
-    showSaved();
-    render();
-  }catch(e){
-    alert('रूम नंबर सेव नहीं हो सका: ' + (e.message || e));
-  }
-}
-
-async function commitEdit(member, newNameRaw){
-  const newName = newNameRaw.trim();
-  if(!newName){ editingId = null; render(); return; }
-  if(newName !== member.name && MEMBERS.some(m => m.name === newName)){
-    alert('यह नाम पहले से सूची में है।');
-    return;
-  }
-  try{
-    const { error } = await sb
-      .from('galli_members')
-      .update({ name: newName })
-      .eq('id', member.id);
-    if(error) throw error;
-    member.name = newName;
-    editingId = null;
-    showSaved();
-    render();
-  }catch(e){
-    alert('नाम बदला नहीं जा सका: ' + (e.message || e));
-  }
-}
-
-async function deleteMember(member){
-  if(!confirm(`"${member.name}" को सूची से हटाएं?`)) return;
-  try{
-    const { error } = await sb
-      .from('galli_members')
-      .delete()
-      .eq('id', member.id);
-    if(error) throw error;
-    MEMBERS = MEMBERS.filter(m => m.id !== member.id);
-    showSaved();
-    render();
-  }catch(e){
-    alert('हटाया नहीं जा सका: ' + (e.message || e));
-  }
-}
-
-async function addMember(){
-  const input = document.getElementById('newMemberInput');
-  const name = input.value.trim();
-  if(!name) return;
-  if(MEMBERS.some(m => m.name === name)){
-    alert('यह नाम पहले से सूची में है।');
-    return;
-  }
-  try{
-    const { data, error } = await sb
-      .from('galli_members')
-      .insert({ name, galli: null, room_no: null })
-      .select()
-      .single();
-    if(error) throw error;
-    MEMBERS.push(data);
-    showSaved();
-    render();
-    const newInput = document.getElementById('newMemberInput');
-    if(newInput) newInput.focus();
-  }catch(e){
-    alert('सदस्य जोड़ा नहीं जा सका: ' + (e.message || e));
-  }
-}
+/* =====================================================
+   RENDER
+===================================================== */
 
 function render(){
+
   renderTabs();
+
   renderList();
+
 }
 
-function exportToExcel(){
-  if(typeof XLSX === 'undefined'){
-    alert("Excel लाइब्रेरी लोड नहीं हो पाई। कृपया इंटरनेट कनेक्शन जांचें और पुनः प्रयास करें।");
-    return;
-  }
 
-  const wb = XLSX.utils.book_new();
+/* =====================================================
+   ADD MEMBER MODAL
+===================================================== */
 
-  const summaryRows = [["क्र.", "नाम", "गल्ली", "रूम नं."]];
-  const sortedMembers = [...MEMBERS].sort((a,b) => {
-    const ga = a.galli || "9";
-    const gb = b.galli || "9";
-    if(ga !== gb) return ga.localeCompare(gb);
-    return a.name.localeCompare(b.name, 'hi');
-  });
-  sortedMembers.forEach((m, i) => {
-    summaryRows.push([i+1, m.name, m.galli ? ("गल्ली " + m.galli) : "निवड नाही", m.room_no || ""]);
-  });
-  const summarySheet = XLSX.utils.aoa_to_sheet(summaryRows);
-  summarySheet['!cols'] = [{wch:6},{wch:35},{wch:14},{wch:10}];
-  XLSX.utils.book_append_sheet(wb, summarySheet, "सर्व सदस्य");
+function openAddModal(){
 
-  for(let g = 1; g <= 4; g++){
-    const gStr = String(g);
-    const names = sortByRoom(MEMBERS.filter(m => m.galli === gStr));
-    const rows = [["क्र.", "नाम", "रूम नं."]];
-    names.forEach((m, i) => rows.push([i+1, m.name, m.room_no || ""]));
-    if(rows.length === 1) rows.push(["-", "(कोई सदस्य नहीं)", ""]);
-    const sheet = XLSX.utils.aoa_to_sheet(rows);
-    sheet['!cols'] = [{wch:6},{wch:35},{wch:10}];
-    XLSX.utils.book_append_sheet(wb, sheet, "गल्ली " + g);
-  }
+  modalMode =
+    "add";
 
-  const unassigned = MEMBERS.filter(m => !m.galli);
-  const uRows = [["क्र.", "नाम"]];
-  unassigned.forEach((m, i) => uRows.push([i+1, m.name]));
-  if(uRows.length === 1) uRows.push(["-", "(कोई सदस्य नहीं)"]);
-  const uSheet = XLSX.utils.aoa_to_sheet(uRows);
-  uSheet['!cols'] = [{wch:6},{wch:35}];
-  XLSX.utils.book_append_sheet(wb, uSheet, "निवड नाही");
+  editingMember =
+    null;
 
-  // Committee sheet
-  const cRows = [["क्र.", "नाम", "पद"]];
-  COMMITTEE.forEach((p, i) => cRows.push([i+1, p.name, p.role]));
-  const cSheet = XLSX.utils.aoa_to_sheet(cRows);
-  cSheet['!cols'] = [{wch:6},{wch:30},{wch:16}];
-  XLSX.utils.book_append_sheet(wb, cSheet, "समिती");
+  modalSelectedGalli =
+    "";
 
-  XLSX.writeFile(wb, "galli_members.xlsx");
+
+  document.getElementById(
+    "memberModalTitle"
+  ).textContent =
+    "नवीन सदस्य";
+
+
+  document.getElementById(
+    "memberNameInput"
+  ).value =
+    "";
+
+
+  document.getElementById(
+    "memberRoomInput"
+  ).value =
+    "";
+
+
+  selectModalGalli("");
+
+
+  document.getElementById(
+    "memberModal"
+  ).classList.add("show");
+
+
+  setTimeout(() => {
+
+    document.getElementById(
+      "memberNameInput"
+    ).focus();
+
+  },100);
+
 }
 
-// ===================== POSTER GENERATION =====================
 
-function escHtml(s){
-  const div = document.createElement('div');
-  div.textContent = s;
-  return div.innerHTML;
+function closeMemberModal(){
+
+  document.getElementById(
+    "memberModal"
+  ).classList.remove("show");
+
 }
 
-function buildPosterHTML(){
-  const galliLists = {1:[], 2:[], 3:[], 4:[]};
-  MEMBERS.forEach(m => {
-    if(m.galli && galliLists[m.galli]) galliLists[m.galli].push(m);
-  });
-  Object.keys(galliLists).forEach(g => { galliLists[g] = sortByRoom(galliLists[g]); });
 
-  const totalMembers = galliLists[1].length + galliLists[2].length + galliLists[3].length + galliLists[4].length;
+/* =====================================================
+   EDIT MODAL
+===================================================== */
 
-  function namesFor(role){
-    return COMMITTEE.filter(c => c.role === role).map(c => c.name);
-  }
-  const adhyaksh = namesFor('अध्यक्ष');
-  const upadhyaksh = namesFor('उपाध्यक्ष');
-  const sachiv = namesFor('सचिव');
-  const upsachiv = namesFor('उपसचिव');
-  const khajindar = namesFor('खजिनदार');
-  const upkhaj = namesFor('उपखजिनदार');
-  const sadasya = namesFor('सदस्य');
+function openEditModal(member){
 
-  function chip(role, name, cls){
-    return `<div class="p-chip ${cls}">
-        <div class="p-chip-role">${escHtml(role)}</div>
-        <div class="p-chip-name">श्री. ${escHtml(name)}</div>
-      </div>`;
-  }
+  modalMode =
+    "edit";
 
-  let chipsHtml = "";
-  adhyaksh.forEach(n => chipsHtml += chip("अध्यक्ष", n, "p-chip-gold"));
-  upadhyaksh.forEach(n => chipsHtml += chip("उपाध्यक्ष", n, "p-chip-maroon"));
-  sachiv.forEach(n => chipsHtml += chip("सचिव", n, "p-chip-maroon"));
-  upsachiv.forEach(n => chipsHtml += chip("उपसचिव", n, "p-chip-purple"));
-  khajindar.forEach(n => chipsHtml += chip("खजिनदार", n, "p-chip-gold"));
-  upkhaj.forEach(n => chipsHtml += chip("उपखजिनदार", n, "p-chip-purple"));
+  editingMember =
+    member;
 
-  const advisorChips = sadasya.map(n => `<div class="p-advisor-chip">श्री. ${escHtml(n)}</div>`).join("");
+  modalSelectedGalli =
+    member.galli || "";
 
-  const galliColors = [
-    ["#8e24aa", "#f3e5f5"],
-    ["#d84315", "#fff3e0"],
-    ["#00695c", "#e0f2f1"],
-    ["#ad1457", "#fce4ec"]
-  ];
 
-  function galliCard(num, title, members, accent, bgTint){
-    let items = "";
-    members.forEach((m, i) => {
-      const roomTxt = m.room_no ? ` <span class="p-room">(रूम ${escHtml(m.room_no)})</span>` : '';
-      items += `<div class="p-member-row">
-          <span class="p-member-idx" style="background:${accent};">${i+1}</span>
-          <span class="p-member-name">${escHtml(m.name)}${roomTxt}</span>
-        </div>`;
+  document.getElementById(
+    "memberModalTitle"
+  ).textContent =
+    "सदस्य संपादित करा";
+
+
+  document.getElementById(
+    "memberNameInput"
+  ).value =
+    member.name;
+
+
+  document.getElementById(
+    "memberRoomInput"
+  ).value =
+    member.room_no || "";
+
+
+  selectModalGalli(
+    modalSelectedGalli
+  );
+
+
+  document.getElementById(
+    "memberModal"
+  ).classList.add("show");
+
+
+  setTimeout(() => {
+
+    document.getElementById(
+      "memberNameInput"
+    ).focus();
+
+  },100);
+
+}
+
+
+/* =====================================================
+   SELECT GALLI IN MODAL
+===================================================== */
+
+function selectModalGalli(galli){
+
+  modalSelectedGalli =
+    galli;
+
+
+  document
+    .querySelectorAll(
+      ".galli-option"
+    )
+
+    .forEach(button => {
+
+      button.classList.toggle(
+
+        "active",
+
+        button.dataset.galli === galli
+
+      );
+
     });
-    return `
-      <div class="p-galli-card">
-        <div class="p-galli-card-header" style="background:linear-gradient(135deg,${accent},${accent}cc);">
-          <span class="p-galli-card-title">${escHtml(title)}</span>
-          <span class="p-galli-card-count">${members.length} सदस्य</span>
-        </div>
-        <div class="p-galli-card-body" style="background:${bgTint};">
-          ${items}
-        </div>
-      </div>`;
-  }
 
-  const galliCardsHtml =
-    galliCard(1, "गल्ली क्रमांक १", galliLists[1], galliColors[0][0], galliColors[0][1]) +
-    galliCard(2, "गल्ली क्रमांक २", galliLists[2], galliColors[1][0], galliColors[1][1]) +
-    galliCard(3, "गल्ली क्रमांक ३", galliLists[3], galliColors[2][0], galliColors[2][1]) +
-    galliCard(4, "गल्ली क्रमांक ४", galliLists[4], galliColors[3][0], galliColors[3][1]);
-
-  return `
-  <div class="p-body">
-    <div class="p-header">
-      <div class="p-eyebrow">॥ श्री गणेशाय नमः ॥</div>
-      <div class="p-main-title">मंगलमुर्ती चाळ</div>
-      <div class="p-sub-title">रहिवासी व पदाधिकारी सूची</div>
-    </div>
-    <div class="p-scallop"></div>
-
-    <div class="p-committee-section">
-      <div class="p-section-heading">
-        <div class="p-line"></div>
-        <div class="p-label">पदाधिकारी समिती</div>
-        <div class="p-line"></div>
-      </div>
-      <div class="p-chip-wrap">${chipsHtml}</div>
-      <div class="p-advisor-panel">
-        <span class="p-advisor-label">सदस्य (सल्लागार):</span>
-        ${advisorChips}
-      </div>
-    </div>
-
-    <div class="p-galli-section">
-      <div class="p-section-heading">
-        <div class="p-line"></div>
-        <div class="p-label">गल्लीनुसार सभासद यादी</div>
-        <div class="p-line"></div>
-      </div>
-      <div class="p-galli-grid">${galliCardsHtml}</div>
-    </div>
-
-    <div class="p-footer">एकूण सभासद संख्या: <span class="p-count">${totalMembers}</span></div>
-  </div>`;
 }
 
-const POSTER_STYLE = `
-<style id="posterStyleTag">
-  #posterRoot *{ box-sizing:border-box; margin:0; padding:0; }
-  #posterRoot .p-body{
-    font-family:'Noto Sans Devanagari','Poppins',sans-serif;
-    width:1700px;
-    background:#fdf6ec;
-  }
-  #posterRoot .p-header{
-    position:relative;
-    background:linear-gradient(135deg,#ffb300 0%,#ff8f00 45%,#e65100 100%);
-    padding:50px 60px 70px 60px;
-    text-align:center;
-    overflow:hidden;
-  }
-  #posterRoot .p-eyebrow{
-    color:#fff8e1;
-    font-size:26px;
-    font-weight:600;
-    letter-spacing:6px;
-    margin-bottom:6px;
-  }
-  #posterRoot .p-main-title{
-    font-size:96px;
-    font-weight:900;
-    color:#ffffff;
-    text-shadow: 0 4px 0 #b71c1c, 0 8px 18px rgba(0,0,0,0.25);
-    letter-spacing:2px;
-  }
-  #posterRoot .p-sub-title{
-    margin-top:14px;
-    font-size:30px;
-    font-weight:700;
-    color:#fff3e0;
-    letter-spacing:3px;
-  }
-  #posterRoot .p-scallop{
-    height:34px;
-    background:radial-gradient(circle at 17px -6px, transparent 16px, #fdf6ec 17px) repeat-x;
-    background-size:34px 34px;
-    margin-top:-2px;
-  }
-  #posterRoot .p-committee-section{ padding:20px 60px 10px 60px; }
-  #posterRoot .p-section-heading{
-    display:flex;
-    align-items:center;
-    gap:16px;
-    margin-bottom:22px;
-  }
-  #posterRoot .p-line{
-    flex:1;
-    height:3px;
-    background:linear-gradient(90deg, transparent, #d4af37, transparent);
-  }
-  #posterRoot .p-label{
-    font-size:36px;
-    font-weight:800;
-    color:#8B0000;
-    white-space:nowrap;
-  }
-  #posterRoot .p-chip-wrap{
-    display:flex;
-    flex-wrap:wrap;
-    gap:16px;
-    justify-content:center;
-    margin-bottom:22px;
-  }
-  #posterRoot .p-chip{
-    border-radius:14px;
-    padding:14px 26px;
-    min-width:220px;
-    text-align:center;
-    box-shadow:0 4px 10px rgba(0,0,0,0.12);
-    border:2px solid rgba(0,0,0,0.06);
-  }
-  #posterRoot .p-chip-role{
-    font-size:19px;
-    font-weight:700;
-    color:#ffffff;
-    opacity:0.95;
-    margin-bottom:4px;
-    letter-spacing:1px;
-  }
-  #posterRoot .p-chip-name{
-    font-size:24px;
-    font-weight:800;
-    color:#ffffff;
-  }
-  #posterRoot .p-chip-gold{ background:linear-gradient(135deg,#e0a800,#c98a00); }
-  #posterRoot .p-chip-maroon{ background:linear-gradient(135deg,#a3231f,#7a1a17); }
-  #posterRoot .p-chip-purple{ background:linear-gradient(135deg,#7b1fa2,#5c1580); }
-  #posterRoot .p-advisor-panel{
-    background:#fff8e1;
-    border:2px dashed #d4af37;
-    border-radius:16px;
-    padding:18px 26px;
-    display:flex;
-    align-items:center;
-    flex-wrap:wrap;
-    gap:14px;
-    margin-bottom:36px;
-  }
-  #posterRoot .p-advisor-label{
-    font-size:22px;
-    font-weight:800;
-    color:#8B0000;
-    margin-right:6px;
-  }
-  #posterRoot .p-advisor-chip{
-    background:#ffffff;
-    border:2px solid #d4af37;
-    color:#5c3d00;
-    font-weight:700;
-    font-size:19px;
-    padding:8px 18px;
-    border-radius:999px;
-  }
-  #posterRoot .p-galli-section{ padding:0 60px 50px 60px; }
-  #posterRoot .p-galli-grid{
-    display:flex;
-    flex-wrap:nowrap;
-    gap:18px;
-    justify-content:center;
-  }
-  #posterRoot .p-galli-card{
-    width:364px;
-    flex-shrink:0;
-    border-radius:18px;
-    overflow:hidden;
-    box-shadow:0 8px 20px rgba(0,0,0,0.15);
-    border:1px solid rgba(0,0,0,0.05);
-  }
-  #posterRoot .p-galli-card-header{
-    padding:16px 20px;
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-  }
-  #posterRoot .p-galli-card-title{
-    color:#fff;
-    font-size:24px;
-    font-weight:800;
-  }
-  #posterRoot .p-galli-card-count{
-    color:#fff;
-    font-size:15px;
-    font-weight:600;
-    background:rgba(255,255,255,0.25);
-    padding:4px 12px;
-    border-radius:999px;
-  }
-  #posterRoot .p-galli-card-body{ padding:16px 18px 20px 18px; }
-  #posterRoot .p-member-row{
-    display:flex;
-    align-items:flex-start;
-    gap:12px;
-    padding:8px 4px;
-    border-bottom:1px solid rgba(0,0,0,0.06);
-  }
-  #posterRoot .p-member-row:last-child{ border-bottom:none; }
-  #posterRoot .p-member-idx{
-    flex-shrink:0;
-    width:26px;
-    height:26px;
-    border-radius:50%;
-    color:#fff;
-    font-size:13px;
-    font-weight:700;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    margin-top:2px;
-  }
-  #posterRoot .p-member-name{
-    font-size:19px;
-    font-weight:600;
-    color:#2b2b2b;
-    line-height:1.3;
-  }
-  #posterRoot .p-room{
-    font-size:15px;
-    font-weight:600;
-    color:#6a6a6a;
-  }
-  #posterRoot .p-footer{
-    text-align:center;
-    padding:24px 20px 34px 20px;
-    color:#8B0000;
-    font-size:20px;
-    font-weight:700;
-    letter-spacing:1px;
-  }
-  #posterRoot .p-count{ color:#e65100; }
-</style>`;
 
-async function generatePoster(){
-  const btn = document.getElementById('posterBtn');
-  const originalText = btn.textContent;
-  btn.disabled = true;
-  btn.textContent = '⏳ बन रहा है...';
+/* =====================================================
+   SAVE MEMBER
+===================================================== */
+
+async function saveMemberModal(){
+
+  const name =
+    document
+      .getElementById(
+        "memberNameInput"
+      )
+      .value
+      .trim();
+
+
+  const room =
+    document
+      .getElementById(
+        "memberRoomInput"
+      )
+      .value
+      .trim();
+
+
+  if(!name){
+
+    showToast(
+      "कृपया सदस्याचे नाव लिहा",
+      "error"
+    );
+
+    return;
+
+  }
+
+
+  const duplicate =
+    MEMBERS.find(member =>
+
+      member.name.trim().toLowerCase()
+      ===
+      name.toLowerCase()
+
+      &&
+
+      (
+        modalMode === "add"
+        ||
+        member.id !== editingMember.id
+      )
+
+    );
+
+
+  if(duplicate){
+
+    showToast(
+      "हे नाव आधीपासून सूचीमध्ये आहे",
+      "error"
+    );
+
+    return;
+
+  }
+
+
+  const saveButton =
+    document.getElementById(
+      "memberSaveBtn"
+    );
+
+
+  saveButton.disabled =
+    true;
+
 
   try{
-    // Inject poster-scoped styles once
-    if(!document.getElementById('posterStyleTag')){
-      document.head.insertAdjacentHTML('beforeend', POSTER_STYLE);
+
+    /* ---------- ADD ---------- */
+
+    if(modalMode === "add"){
+
+      const {
+        data,
+        error
+      } = await sb
+
+        .from("galli_members")
+
+        .insert({
+
+          name:name,
+
+          galli:
+            modalSelectedGalli || null,
+
+          room_no:
+            room || null
+
+        })
+
+        .select()
+
+        .single();
+
+
+      if(error)
+        throw error;
+
+
+      MEMBERS.push(data);
+
+
+      showToast(
+        "सदस्य यशस्वीरित्या जोडला ✓"
+      );
+
     }
 
-    const root = document.getElementById('posterRoot');
-    root.innerHTML = buildPosterHTML();
 
-    // Give web fonts a moment to apply before capture
-    await new Promise(r => setTimeout(r, 300));
+    /* ---------- EDIT ---------- */
 
-    const canvas = await html2canvas(root, {
-      backgroundColor: '#fdf6ec',
-      scale: 2,
-      useCORS: true,
-      width: 1700,
-      windowWidth: 1700
-    });
+    else{
 
-    const dataUrl = canvas.toDataURL('image/png');
-    const link = document.createElement('a');
-    const dateStr = new Date().toISOString().slice(0,10);
-    link.download = `mangalmurti_poster_${dateStr}.png`;
-    link.href = dataUrl;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+      const {
+        error
+      } = await sb
 
-    root.innerHTML = ""; // clear hidden container
-  }catch(e){
-    console.error('Poster generation failed', e);
-    alert('पोस्टर नहीं बन सका: ' + (e.message || e));
-  }finally{
-    btn.disabled = false;
-    btn.textContent = originalText;
+        .from("galli_members")
+
+        .update({
+
+          name:name,
+
+          galli:
+            modalSelectedGalli || null,
+
+          room_no:
+            room || null
+
+        })
+
+        .eq(
+          "id",
+          editingMember.id
+        );
+
+
+      if(error)
+        throw error;
+
+
+      editingMember.name =
+        name;
+
+      editingMember.galli =
+        modalSelectedGalli || null;
+
+      editingMember.room_no =
+        room || null;
+
+
+      showToast(
+        "सदस्याची माहिती अपडेट झाली ✓"
+      );
+
+    }
+
+
+    updateStats();
+
+    closeMemberModal();
+
+    render();
+
   }
+
+  catch(error){
+
+    console.error(error);
+
+    showToast(
+      "सेव्ह करता आले नाही: " +
+      (error.message || error),
+      "error"
+    );
+
+  }
+
+  finally{
+
+    saveButton.disabled =
+      false;
+
+  }
+
 }
 
+
+/* =====================================================
+   UPDATE GALLI
+===================================================== */
+
+async function updateGalli(
+  member,
+  galli
+){
+
+  try{
+
+    const {
+      error
+    } = await sb
+
+      .from("galli_members")
+
+      .update({
+        galli
+      })
+
+      .eq(
+        "id",
+        member.id
+      );
+
+
+    if(error)
+      throw error;
+
+
+    member.galli =
+      galli;
+
+
+    updateStats();
+
+    showToast(
+      "गल्ली अपडेट झाली ✓"
+    );
+
+    render();
+
+  }
+
+  catch(error){
+
+    showToast(
+      "अपडेट करता आले नाही",
+      "error"
+    );
+
+  }
+
+}
+
+
+/* =====================================================
+   UPDATE ROOM
+===================================================== */
+
+async function updateRoom(
+  member,
+  room_no
+){
+
+  try{
+
+    const {
+      error
+    } = await sb
+
+      .from("galli_members")
+
+      .update({
+        room_no
+      })
+
+      .eq(
+        "id",
+        member.id
+      );
+
+
+    if(error)
+      throw error;
+
+
+    member.room_no =
+      room_no;
+
+
+    showToast(
+      "रूम नंबर सेव्ह झाला ✓"
+    );
+
+    render();
+
+  }
+
+  catch(error){
+
+    showToast(
+      "रूम नंबर सेव्ह करता आला नाही",
+      "error"
+    );
+
+  }
+
+}
+
+
+/* =====================================================
+   DELETE
+===================================================== */
+
+function openDeleteModal(member){
+
+  deletingMember =
+    member;
+
+
+  document.getElementById(
+    "deleteMemberName"
+  ).textContent =
+    member.name;
+
+
+  document.getElementById(
+    "deleteModal"
+  ).classList.add("show");
+
+}
+
+
+function closeDeleteModal(){
+
+  deletingMember =
+    null;
+
+
+  document.getElementById(
+    "deleteModal"
+  ).classList.remove("show");
+
+}
+
+
+async function confirmDelete(){
+
+  if(!deletingMember)
+    return;
+
+
+  try{
+
+    const {
+      error
+    } = await sb
+
+      .from("galli_members")
+
+      .delete()
+
+      .eq(
+        "id",
+        deletingMember.id
+      );
+
+
+    if(error)
+      throw error;
+
+
+    MEMBERS =
+      MEMBERS.filter(
+        member =>
+          member.id !==
+          deletingMember.id
+      );
+
+
+    updateStats();
+
+    closeDeleteModal();
+
+    render();
+
+
+    showToast(
+      "सदस्य हटवण्यात आला"
+    );
+
+  }
+
+  catch(error){
+
+    showToast(
+      "सदस्य हटवता आला नाही",
+      "error"
+    );
+
+  }
+
+}
+
+
+/* =====================================================
+   EXCEL EXPORT
+===================================================== */
+
+function exportToExcel(){
+
+  if(typeof XLSX === "undefined"){
+
+    showToast(
+      "Excel लायब्ररी उपलब्ध नाही",
+      "error"
+    );
+
+    return;
+
+  }
+
+
+  const wb =
+    XLSX.utils.book_new();
+
+
+  const summaryRows = [
+
+    [
+      "क्र.",
+      "नाम",
+      "गल्ली",
+      "रूम नं."
+    ]
+
+  ];
+
+
+  const sortedMembers =
+    [...MEMBERS].sort(
+      (a,b) => {
+
+        const ga =
+          a.galli || "9";
+
+        const gb =
+          b.galli || "9";
+
+
+        if(ga !== gb)
+          return ga.localeCompare(gb);
+
+
+        return a.name.localeCompare(
+          b.name,
+          "hi"
+        );
+
+      }
+    );
+
+
+  sortedMembers.forEach(
+    (member,index) => {
+
+      summaryRows.push([
+
+        index + 1,
+
+        member.name,
+
+        member.galli
+          ? "गल्ली " + member.galli
+          : "निवड नाही",
+
+        member.room_no || ""
+
+      ]);
+
+    }
+  );
+
+
+  const summarySheet =
+    XLSX.utils.aoa_to_sheet(
+      summaryRows
+    );
+
+
+  summarySheet["!cols"] = [
+
+    {wch:6},
+
+    {wch:35},
+
+    {wch:14},
+
+    {wch:10}
+
+  ];
+
+
+  XLSX.utils.book_append_sheet(
+
+    wb,
+
+    summarySheet,
+
+    "सर्व सदस्य"
+
+  );
+
+
+  for(let g=1;g<=4;g++){
+
+    const galli =
+      String(g);
+
+
+    const members =
+      sortByRoom(
+
+        MEMBERS.filter(
+          member =>
+            member.galli === galli
+        )
+
+      );
+
+
+    const rows = [
+
+      [
+        "क्र.",
+        "नाम",
+        "रूम नं."
+      ]
+
+    ];
+
+
+    members.forEach(
+      (member,index) => {
+
+        rows.push([
+
+          index + 1,
+
+          member.name,
+
+          member.room_no || ""
+
+        ]);
+
+      }
+    );
+
+
+    if(rows.length === 1){
+
+      rows.push([
+        "-",
+        "(कोई सदस्य नहीं)",
+        ""
+      ]);
+
+    }
+
+
+    const sheet =
+      XLSX.utils.aoa_to_sheet(
+        rows
+      );
+
+
+    sheet["!cols"] = [
+
+      {wch:6},
+
+      {wch:35},
+
+      {wch:10}
+
+    ];
+
+
+    XLSX.utils.book_append_sheet(
+
+      wb,
+
+      sheet,
+
+      "गल्ली " + g
+
+    );
+
+  }
+
+
+  /* UNASSIGNED */
+
+  const unassigned =
+    MEMBERS.filter(
+      member => !member.galli
+    );
+
+
+  const uRows = [
+
+    [
+      "क्र.",
+      "नाम"
+    ]
+
+  ];
+
+
+  unassigned.forEach(
+    (member,index) => {
+
+      uRows.push([
+        index + 1,
+        member.name
+      ]);
+
+    }
+  );
+
+
+  if(uRows.length === 1){
+
+    uRows.push([
+      "-",
+      "(कोई सदस्य नहीं)"
+    ]);
+
+  }
+
+
+  const uSheet =
+    XLSX.utils.aoa_to_sheet(
+      uRows
+    );
+
+
+  uSheet["!cols"] = [
+
+    {wch:6},
+
+    {wch:35}
+
+  ];
+
+
+  XLSX.utils.book_append_sheet(
+
+    wb,
+
+    uSheet,
+
+    "निवड नाही"
+
+  );
+
+
+  /* COMMITTEE */
+
+  const cRows = [
+
+    [
+      "क्र.",
+      "नाम",
+      "पद"
+    ]
+
+  ];
+
+
+  COMMITTEE.forEach(
+    (person,index) => {
+
+      cRows.push([
+
+        index + 1,
+
+        person.name,
+
+        person.role
+
+      ]);
+
+    }
+  );
+
+
+  const cSheet =
+    XLSX.utils.aoa_to_sheet(
+      cRows
+    );
+
+
+  cSheet["!cols"] = [
+
+    {wch:6},
+
+    {wch:30},
+
+    {wch:16}
+
+  ];
+
+
+  XLSX.utils.book_append_sheet(
+
+    wb,
+
+    cSheet,
+
+    "समिती"
+
+  );
+
+
+  XLSX.writeFile(
+    wb,
+    "galli_members.xlsx"
+  );
+
+
+  showToast(
+    "Excel फाईल तयार झाली ✓"
+  );
+
+}
+
+
+/* =====================================================
+   POSTER
+===================================================== */
+
+function escapeHTML(value){
+
+  const div =
+    document.createElement("div");
+
+  div.textContent =
+    value || "";
+
+  return div.innerHTML;
+
+}
+
+
+function escapeAttribute(value){
+
+  return escapeHTML(value)
+    .replace(/"/g,"&quot;");
+
+}
+
+
+/* ================= POSTER HTML ================= */
+
+function buildPosterHTML(){
+
+  const galliLists = {
+
+    1:[],
+
+    2:[],
+
+    3:[],
+
+    4:[]
+
+  };
+
+
+  MEMBERS.forEach(member => {
+
+    if(
+      member.galli &&
+      galliLists[member.galli]
+    ){
+
+      galliLists[member.galli]
+        .push(member);
+
+    }
+
+  });
+
+
+  Object.keys(galliLists)
+    .forEach(g => {
+
+      galliLists[g] =
+        sortByRoom(
+          galliLists[g]
+        );
+
+    });
+
+
+  const totalMembers =
+
+    galliLists[1].length +
+
+    galliLists[2].length +
+
+    galliLists[3].length +
+
+    galliLists[4].length;
+
+
+  function namesFor(role){
+
+    return COMMITTEE
+
+      .filter(
+        member =>
+          member.role === role
+      )
+
+      .map(
+        member =>
+          member.name
+      );
+
+  }
+
+
+  const adhyaksh =
+    namesFor("अध्यक्ष");
+
+  const upadhyaksh =
+    namesFor("उपाध्यक्ष");
+
+  const sachiv =
+    namesFor("सचिव");
+
+  const upsachiv =
+    namesFor("उपसचिव");
+
+  const khajindar =
+    namesFor("खजिनदार");
+
+  const upkhaj =
+    namesFor("उपखजिनदार");
+
+  const sadasya =
+    namesFor("सदस्य");
+
+
+  function chip(role,name,cls){
+
+    return `
+
+      <div class="p-chip ${cls}">
+
+        <div class="p-chip-role">
+          ${escapeHTML(role)}
+        </div>
+
+        <div class="p-chip-name">
+          श्री. ${escapeHTML(name)}
+        </div>
+
+      </div>
+
+    `;
+
+  }
+
+
+  let chipsHtml = "";
+
+
+  adhyaksh.forEach(
+    name =>
+      chipsHtml +=
+        chip(
+          "अध्यक्ष",
+          name,
+          "p-chip-gold"
+        )
+  );
+
+
+  upadhyaksh.forEach(
+    name =>
+      chipsHtml +=
+        chip(
+          "उपाध्यक्ष",
+          name,
+          "p-chip-maroon"
+        )
+  );
+
+
+  sachiv.forEach(
+    name =>
+      chipsHtml +=
+        chip(
+          "सचिव",
+          name,
+          "p-chip-maroon"
+        )
+  );
+
+
+  upsachiv.forEach(
+    name =>
+      chipsHtml +=
+        chip(
+          "उपसचिव",
+          name,
+          "p-chip-purple"
+        )
+  );
+
+
+  khajindar.forEach(
+    name =>
+      chipsHtml +=
+        chip(
+          "खजिनदार",
+          name,
+          "p-chip-gold"
+        )
+  );
+
+
+  upkhaj.forEach(
+    name =>
+      chipsHtml +=
+        chip(
+          "उपखजिनदार",
+          name,
+          "p-chip-purple"
+        )
+  );
+
+
+  const advisorChips =
+    sadasya.map(
+      name =>
+
+        `<div class="p-advisor-chip">
+          श्री. ${escapeHTML(name)}
+        </div>`
+
+    ).join("");
+
+
+  const galliColors = [
+
+    ["#7c3aed","#f3efff"],
+
+    ["#ea580c","#fff1e8"],
+
+    ["#059669","#eafaf4"],
+
+    ["#db2777","#fff0f7"]
+
+  ];
+
+
+  function galliCard(
+    title,
+    members,
+    accent,
+    background
+  ){
+
+    let items = "";
+
+
+    members.forEach(
+      (member,index) => {
+
+        const roomText =
+          member.room_no
+
+            ? `<span class="p-room">
+                (रूम ${escapeHTML(member.room_no)})
+              </span>`
+
+            : "";
+
+
+        items += `
+
+          <div class="p-member-row">
+
+            <span
+              class="p-member-idx"
+              style="background:${accent};"
+            >
+              ${index+1}
+            </span>
+
+            <span class="p-member-name">
+
+              ${escapeHTML(member.name)}
+
+              ${roomText}
+
+            </span>
+
+          </div>
+
+        `;
+
+      }
+    );
+
+
+    return `
+
+      <div class="p-galli-card">
+
+        <div
+          class="p-galli-card-header"
+          style="
+            background:
+            linear-gradient(
+              135deg,
+              ${accent},
+              ${accent}cc
+            );
+          "
+        >
+
+          <span class="p-galli-card-title">
+            ${escapeHTML(title)}
+          </span>
+
+          <span class="p-galli-card-count">
+            ${members.length} सदस्य
+          </span>
+
+        </div>
+
+
+        <div
+          class="p-galli-card-body"
+          style="background:${background};"
+        >
+
+          ${items}
+
+        </div>
+
+      </div>
+
+    `;
+
+  }
+
+
+  const galliCardsHtml =
+
+    galliCard(
+      "गल्ली क्रमांक १",
+      galliLists[1],
+      galliColors[0][0],
+      galliColors[0][1]
+    )
+
+    +
+
+    galliCard(
+      "गल्ली क्रमांक २",
+      galliLists[2],
+      galliColors[1][0],
+      galliColors[1][1]
+    )
+
+    +
+
+    galliCard(
+      "गल्ली क्रमांक ३",
+      galliLists[3],
+      galliColors[2][0],
+      galliColors[2][1]
+    )
+
+    +
+
+    galliCard(
+      "गल्ली क्रमांक ४",
+      galliLists[4],
+      galliColors[3][0],
+      galliColors[3][1]
+    );
+
+
+  return `
+
+    <div class="p-body">
+
+      <div class="p-header">
+
+        <div class="p-eyebrow">
+          ॥ श्री गणेशाय नमः ॥
+        </div>
+
+        <div class="p-main-title">
+          मंगलमुर्ती चाळ
+        </div>
+
+        <div class="p-sub-title">
+          रहिवासी व पदाधिकारी सूची
+        </div>
+
+      </div>
+
+
+      <div class="p-scallop"></div>
+
+
+      <div class="p-committee-section">
+
+        <div class="p-section-heading">
+
+          <div class="p-line"></div>
+
+          <div class="p-label">
+            पदाधिकारी समिती
+          </div>
+
+          <div class="p-line"></div>
+
+        </div>
+
+
+        <div class="p-chip-wrap">
+
+          ${chipsHtml}
+
+        </div>
+
+
+        <div class="p-advisor-panel">
+
+          <span class="p-advisor-label">
+            सदस्य (सल्लागार):
+          </span>
+
+          ${advisorChips}
+
+        </div>
+
+      </div>
+
+
+      <div class="p-galli-section">
+
+        <div class="p-section-heading">
+
+          <div class="p-line"></div>
+
+          <div class="p-label">
+            गल्लीनुसार सभासद यादी
+          </div>
+
+          <div class="p-line"></div>
+
+        </div>
+
+
+        <div class="p-galli-grid">
+
+          ${galliCardsHtml}
+
+        </div>
+
+      </div>
+
+
+      <div class="p-footer">
+
+        एकूण सभासद संख्या:
+
+        <span class="p-count">
+          ${totalMembers}
+        </span>
+
+      </div>
+
+    </div>
+
+  `;
+
+}
+
+
+const POSTER_STYLE = `
+
+<style id="posterStyleTag">
+
+#posterRoot *{
+  box-sizing:border-box;
+  margin:0;
+  padding:0;
+}
+
+#posterRoot .p-body{
+  font-family:'Noto Sans Devanagari','Poppins',sans-serif;
+  width:1700px;
+  background:#fdf6ec;
+}
+
+#posterRoot .p-header{
+  background:
+    linear-gradient(
+      135deg,
+      #ffb300 0%,
+      #ff8f00 45%,
+      #e65100 100%
+    );
+  padding:50px 60px 70px;
+  text-align:center;
+}
+
+#posterRoot .p-eyebrow{
+  color:#fff8e1;
+  font-size:26px;
+  font-weight:600;
+  letter-spacing:6px;
+}
+
+#posterRoot .p-main-title{
+  font-size:96px;
+  font-weight:900;
+  color:#fff;
+  text-shadow:
+    0 4px 0 #b71c1c,
+    0 8px 18px rgba(0,0,0,.25);
+}
+
+#posterRoot .p-sub-title{
+  margin-top:14px;
+  font-size:30px;
+  font-weight:700;
+  color:#fff3e0;
+}
+
+#posterRoot .p-scallop{
+  height:34px;
+  background:
+    radial-gradient(
+      circle at 17px -6px,
+      transparent 16px,
+      #fdf6ec 17px
+    )
+    repeat-x;
+  background-size:34px 34px;
+}
+
+#posterRoot .p-committee-section{
+  padding:20px 60px 10px;
+}
+
+#posterRoot .p-section-heading{
+  display:flex;
+  align-items:center;
+  gap:16px;
+  margin-bottom:22px;
+}
+
+#posterRoot .p-line{
+  flex:1;
+  height:3px;
+  background:
+    linear-gradient(
+      90deg,
+      transparent,
+      #d4af37,
+      transparent
+    );
+}
+
+#posterRoot .p-label{
+  font-size:36px;
+  font-weight:800;
+  color:#8B0000;
+}
+
+#posterRoot .p-chip-wrap{
+  display:flex;
+  flex-wrap:wrap;
+  gap:16px;
+  justify-content:center;
+  margin-bottom:22px;
+}
+
+#posterRoot .p-chip{
+  border-radius:14px;
+  padding:14px 26px;
+  min-width:220px;
+  text-align:center;
+}
+
+#posterRoot .p-chip-role{
+  font-size:19px;
+  font-weight:700;
+  color:white;
+}
+
+#posterRoot .p-chip-name{
+  font-size:24px;
+  font-weight:800;
+  color:white;
+}
+
+#posterRoot .p-chip-gold{
+  background:
+    linear-gradient(
+      135deg,
+      #e0a800,
+      #c98a00
+    );
+}
+
+#posterRoot .p-chip-maroon{
+  background:
+    linear-gradient(
+      135deg,
+      #a3231f,
+      #7a1a17
+    );
+}
+
+#posterRoot .p-chip-purple{
+  background:
+    linear-gradient(
+      135deg,
+      #7b1fa2,
+      #5c1580
+    );
+}
+
+#posterRoot .p-advisor-panel{
+  background:#fff8e1;
+  border:2px dashed #d4af37;
+  border-radius:16px;
+  padding:18px 26px;
+  display:flex;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:14px;
+  margin-bottom:36px;
+}
+
+#posterRoot .p-advisor-label{
+  font-size:22px;
+  font-weight:800;
+  color:#8B0000;
+}
+
+#posterRoot .p-advisor-chip{
+  background:white;
+  border:2px solid #d4af37;
+  color:#5c3d00;
+  font-weight:700;
+  font-size:19px;
+  padding:8px 18px;
+  border-radius:999px;
+}
+
+#posterRoot .p-galli-section{
+  padding:0 60px 50px;
+}
+
+#posterRoot .p-galli-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:20px;
+}
+
+#posterRoot .p-galli-card{
+  border-radius:18px;
+  overflow:hidden;
+  box-shadow:
+    0 8px 20px rgba(0,0,0,.15);
+}
+
+#posterRoot .p-galli-card-header{
+  padding:16px 20px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+#posterRoot .p-galli-card-title{
+  color:white;
+  font-size:24px;
+  font-weight:800;
+}
+
+#posterRoot .p-galli-card-count{
+  color:white;
+  font-size:15px;
+  background:rgba(255,255,255,.25);
+  padding:4px 12px;
+  border-radius:999px;
+}
+
+#posterRoot .p-galli-card-body{
+  padding:16px 18px 20px;
+}
+
+#posterRoot .p-member-row{
+  display:flex;
+  align-items:flex-start;
+  gap:12px;
+  padding:8px 4px;
+  border-bottom:
+    1px solid rgba(0,0,0,.06);
+}
+
+#posterRoot .p-member-row:last-child{
+  border-bottom:none;
+}
+
+#posterRoot .p-member-idx{
+  width:26px;
+  height:26px;
+  border-radius:50%;
+  color:white;
+  font-size:13px;
+  font-weight:700;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+#posterRoot .p-member-name{
+  font-size:19px;
+  font-weight:600;
+  color:#2b2b2b;
+  line-height:1.3;
+}
+
+#posterRoot .p-room{
+  font-size:15px;
+  color:#6a6a6a;
+}
+
+#posterRoot .p-footer{
+  text-align:center;
+  padding:24px 20px 34px;
+  color:#8B0000;
+  font-size:20px;
+  font-weight:700;
+}
+
+#posterRoot .p-count{
+  color:#e65100;
+}
+
+</style>
+
+`;
+
+
+/* =====================================================
+   GENERATE POSTER
+===================================================== */
+
+async function generatePoster(){
+
+  const button =
+    document.getElementById(
+      "posterBtn"
+    );
+
+
+  const originalText =
+    button.innerHTML;
+
+
+  button.disabled =
+    true;
+
+
+  button.innerHTML =
+    "⏳ तयार होत आहे...";
+
+
+  try{
+
+    if(
+      !document.getElementById(
+        "posterStyleTag"
+      )
+    ){
+
+      document.head.insertAdjacentHTML(
+        "beforeend",
+        POSTER_STYLE
+      );
+
+    }
+
+
+    const root =
+      document.getElementById(
+        "posterRoot"
+      );
+
+
+    root.innerHTML =
+      buildPosterHTML();
+
+
+    await new Promise(
+      resolve =>
+        setTimeout(resolve,500)
+    );
+
+
+    const canvas =
+      await html2canvas(
+        root,
+        {
+
+          backgroundColor:"#fdf6ec",
+
+          scale:2,
+
+          useCORS:true,
+
+          width:1700,
+
+          windowWidth:1700
+
+        }
+      );
+
+
+    const dataUrl =
+      canvas.toDataURL(
+        "image/png"
+      );
+
+
+    const link =
+      document.createElement("a");
+
+
+    const dateString =
+      new Date()
+        .toISOString()
+        .slice(0,10);
+
+
+    link.download =
+      `mangalmurti_poster_${dateString}.png`;
+
+
+    link.href =
+      dataUrl;
+
+
+    document.body.appendChild(link);
+
+    link.click();
+
+    document.body.removeChild(link);
+
+
+    root.innerHTML =
+      "";
+
+
+    showToast(
+      "पोस्टर तयार झाला ✓"
+    );
+
+  }
+
+  catch(error){
+
+    console.error(
+      "Poster error",
+      error
+    );
+
+
+    showToast(
+      "पोस्टर तयार करता आला नाही",
+      "error"
+    );
+
+  }
+
+  finally{
+
+    button.disabled =
+      false;
+
+
+    button.innerHTML =
+      originalText;
+
+  }
+
+}
+
+
+/* =====================================================
+   CLOSE MODALS ON BACKGROUND CLICK
+===================================================== */
+
+document
+  .getElementById("memberModal")
+  .addEventListener(
+    "click",
+    event => {
+
+      if(
+        event.target.id ===
+        "memberModal"
+      ){
+
+        closeMemberModal();
+
+      }
+
+    }
+  );
+
+
+document
+  .getElementById("deleteModal")
+  .addEventListener(
+    "click",
+    event => {
+
+      if(
+        event.target.id ===
+        "deleteModal"
+      ){
+
+        closeDeleteModal();
+
+      }
+
+    }
+  );
+
+
+/* =====================================================
+   ESC KEY
+===================================================== */
+
+document.addEventListener(
+  "keydown",
+  event => {
+
+    if(event.key === "Escape"){
+
+      closeMemberModal();
+
+      closeDeleteModal();
+
+    }
+
+  }
+);
+
+
+/* =====================================================
+   START APP
+===================================================== */
+
 render();
+
 init();
+
 </script>
+
 </body>
 </html>
