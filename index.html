@@ -876,10 +876,6 @@ body{
     grid-template-columns:repeat(3,1fr);
   }
 
-  .hero-stat:last-child{
-    display:none;
-  }
-
 }
 
 @media(max-width:640px){
@@ -1168,6 +1164,7 @@ body{
         class="form-control"
         placeholder="पूर्ण नाव लिहा..."
         autocomplete="off"
+        onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('memberRoomInput').focus();}"
       >
 
     </div>
@@ -1211,6 +1208,7 @@ body{
         class="form-control"
         placeholder="उदा. 12"
         autocomplete="off"
+        onkeydown="if(event.key==='Enter'){event.preventDefault();saveMemberModal();}"
       >
 
     </div>
@@ -1783,10 +1781,28 @@ function renderTabs(){
 
 function getCurrentMembers(){
 
+  const query =
+    document
+      .getElementById("searchInput")
+      .value
+      .trim()
+      .toLowerCase();
+
+
   let members;
 
 
-  if(currentTab === "all"){
+  /* When searching, always search across सर्व (all members),
+     regardless of which tab is currently active. */
+
+  if(query){
+
+    members =
+      [...MEMBERS];
+
+  }
+
+  else if(currentTab === "all"){
 
     members =
       [...MEMBERS];
@@ -1813,6 +1829,7 @@ function getCurrentMembers(){
 
 
   if(
+    !query &&
     ["1","2","3","4"]
     .includes(currentTab)
   ){
@@ -1821,14 +1838,6 @@ function getCurrentMembers(){
       sortByRoom(members);
 
   }
-
-
-  const query =
-    document
-      .getElementById("searchInput")
-      .value
-      .trim()
-      .toLowerCase();
 
 
   if(query){
@@ -1887,8 +1896,17 @@ function renderList(){
 
 
   /* ---------- COMMITTEE ---------- */
+  /* Skip committee's static view when actively searching —
+     search should always show सर्व member results. */
 
-  if(currentTab === "committee"){
+  const activeQuery =
+    document
+      .getElementById("searchInput")
+      .value
+      .trim();
+
+
+  if(currentTab === "committee" && !activeQuery){
 
     titleEl.textContent =
       "पदाधिकारी समिती";
@@ -1957,9 +1975,13 @@ function renderList(){
 
 
   titleEl.textContent =
-    currentTabObject
-      ? currentTabObject.label + " सदस्य"
-      : "सदस्य";
+    activeQuery
+      ? "शोध परिणाम (सर्व)"
+      : (
+        currentTabObject
+          ? currentTabObject.label + " सदस्य"
+          : "सदस्य"
+      );
 
 
   metaEl.textContent =
@@ -2266,7 +2288,9 @@ function openAddModal(){
     null;
 
   modalSelectedGalli =
-    "";
+    ["1","2","3","4"].includes(currentTab)
+      ? currentTab
+      : "";
 
 
   document.getElementById(
@@ -2287,7 +2311,7 @@ function openAddModal(){
     "";
 
 
-  selectModalGalli("");
+  selectModalGalli(modalSelectedGalli);
 
 
   document.getElementById(
@@ -3383,16 +3407,6 @@ function buildPosterHTML(){
     members.forEach(
       (member,index) => {
 
-        const roomText =
-          member.room_no
-
-            ? `<span class="p-room">
-                (रूम ${escapeHTML(member.room_no)})
-              </span>`
-
-            : "";
-
-
         items += `
 
           <div class="p-member-row">
@@ -3407,8 +3421,6 @@ function buildPosterHTML(){
             <span class="p-member-name">
 
               ${escapeHTML(member.name)}
-
-              ${roomText}
 
             </span>
 
@@ -3846,11 +3858,6 @@ const POSTER_STYLE = `
   font-weight:600;
   color:#2b2b2b;
   line-height:1.3;
-}
-
-#posterRoot .p-room{
-  font-size:15px;
-  color:#6a6a6a;
 }
 
 #posterRoot .p-footer{
