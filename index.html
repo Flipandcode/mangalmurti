@@ -1859,6 +1859,10 @@ async function loadMembers(){
       data || [];
 
 
+    lastSyncTime =
+      Date.now();
+
+
     setConnStatus(
       true,
       "लाइव्ह सिंक सुरू"
@@ -1930,6 +1934,10 @@ async function loadNotices(){
 
     NOTICES =
       data || [];
+
+
+    lastSyncTime =
+      Date.now();
 
 
     renderNotices();
@@ -5187,6 +5195,75 @@ document.addEventListener(
       closeNoticeModal();
 
       closeDeleteNoticeModal();
+
+    }
+
+  }
+);
+
+
+/* =====================================================
+   RE-SYNC ON MOBILE BACK/FORWARD CACHE RESTORE
+   Mobile browsers often freeze the page in memory (bfcache)
+   when the user switches apps or navigates away, then restore
+   it exactly as it was — including an empty pre-load state —
+   without re-running the page's scripts. This forces a fresh
+   data fetch whenever that happens, or whenever the app tab
+   becomes visible again after being backgrounded.
+===================================================== */
+
+let lastSyncTime = Date.now();
+
+function resyncData(){
+
+  lastSyncTime =
+    Date.now();
+
+
+  if(sb){
+
+    loadMembers();
+
+    loadNotices();
+
+  }
+
+  else{
+
+    init();
+
+  }
+
+}
+
+window.addEventListener(
+  "pageshow",
+  event => {
+
+    if(event.persisted){
+
+      resyncData();
+
+    }
+
+  }
+);
+
+document.addEventListener(
+  "visibilitychange",
+  () => {
+
+    if(document.visibilityState === "visible"){
+
+      /* Avoid refetching too aggressively —
+         only resync if it's been a little while
+         since the last successful sync. */
+
+      if(Date.now() - lastSyncTime > 3000){
+
+        resyncData();
+
+      }
 
     }
 
