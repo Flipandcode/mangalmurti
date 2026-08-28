@@ -622,6 +622,169 @@ body{
   font-weight:600;
 }
 
+/* ================= NOTICE BOARD ================= */
+
+.notice-board{
+  background:linear-gradient(135deg,#fff8ea,#fffdf8);
+  border:1px solid #f0dfb8;
+  border-radius:24px;
+  padding:18px;
+  margin-top:18px;
+  box-shadow:var(--shadow);
+}
+
+.notice-board-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin:2px 4px 14px;
+  gap:10px;
+}
+
+.notice-board-title{
+  display:flex;
+  align-items:center;
+  gap:9px;
+  font-size:17px;
+  font-weight:800;
+  color:#7c4a03;
+}
+
+.notice-board-title .bell{
+  font-size:19px;
+}
+
+.notice-add-btn{
+  border:none;
+  background:var(--gold);
+  color:white;
+  padding:9px 14px;
+  border-radius:12px;
+  font-family:inherit;
+  font-size:12.5px;
+  font-weight:700;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  gap:6px;
+  flex-shrink:0;
+}
+
+.notice-add-btn:hover{
+  background:#b45309;
+}
+
+.notice-list{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  max-height:420px;
+  overflow-y:auto;
+  padding-right:2px;
+}
+
+.notice-card{
+  position:relative;
+  background:white;
+  border:1px solid var(--line);
+  border-left:4px solid #e5ded0;
+  border-radius:14px;
+  padding:13px 14px;
+}
+
+.notice-card.pinned{
+  border-left-color:var(--gold);
+  background:#fffaf0;
+}
+
+.notice-top-row{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:10px;
+}
+
+.notice-title-row{
+  display:flex;
+  align-items:center;
+  gap:7px;
+  flex-wrap:wrap;
+}
+
+.notice-title{
+  font-size:14.5px;
+  font-weight:800;
+  color:var(--ink);
+}
+
+.pin-badge{
+  font-size:10px;
+  font-weight:700;
+  color:#92400e;
+  background:#fef3c7;
+  padding:2px 8px;
+  border-radius:999px;
+  display:flex;
+  align-items:center;
+  gap:3px;
+}
+
+.notice-content{
+  font-size:13px;
+  color:#3a352f;
+  margin-top:6px;
+  line-height:1.55;
+  white-space:pre-wrap;
+  word-break:break-word;
+}
+
+.notice-date{
+  font-size:10.5px;
+  color:var(--muted);
+  margin-top:8px;
+  font-family:'Poppins',sans-serif;
+}
+
+.notice-actions{
+  display:flex;
+  gap:5px;
+  flex-shrink:0;
+}
+
+.notice-empty{
+  text-align:center;
+  padding:26px 10px;
+  color:var(--muted);
+  font-size:13px;
+}
+
+.checkbox-row{
+  display:flex;
+  align-items:center;
+  gap:9px;
+  margin-top:4px;
+}
+
+.checkbox-row input[type="checkbox"]{
+  width:18px;
+  height:18px;
+  accent-color:var(--gold);
+  cursor:pointer;
+}
+
+.checkbox-row label{
+  font-size:13px;
+  font-weight:600;
+  color:var(--ink);
+  cursor:pointer;
+}
+
+textarea.form-control{
+  resize:vertical;
+  min-height:90px;
+  font-family:inherit;
+}
+
 /* ================= EMPTY ================= */
 
 .empty{
@@ -1014,6 +1177,37 @@ body{
     min-width:auto;
     width:100%;
   }
+
+  .notice-board{
+    padding:13px;
+    border-radius:20px;
+    margin-top:14px;
+  }
+
+  .notice-board-title{
+    font-size:15px;
+  }
+
+  .notice-add-btn{
+    padding:9px 12px;
+    font-size:11.5px;
+  }
+
+  .notice-list{
+    max-height:340px;
+  }
+
+  .notice-card{
+    padding:11px 12px;
+  }
+
+  .notice-title{
+    font-size:13.5px;
+  }
+
+  .notice-content{
+    font-size:12.5px;
+  }
 }
 </style>
 </head>
@@ -1079,6 +1273,29 @@ body{
     </div>
 
   </header>
+
+
+  <!-- ================= NOTICE BOARD ================= -->
+
+  <div class="notice-board">
+
+    <div class="notice-board-head">
+
+      <div class="notice-board-title">
+        <span class="bell">📢</span>
+        <span>सूचना फलक</span>
+      </div>
+
+      <button class="notice-add-btn" onclick="openAddNoticeModal()">
+        <span>＋</span>
+        नवीन सूचना
+      </button>
+
+    </div>
+
+    <div class="notice-list" id="noticeList"></div>
+
+  </div>
 
 
   <!-- ================= TOOLBAR ================= -->
@@ -1265,6 +1482,112 @@ body{
 </div>
 
 
+<!-- ================= NOTICE ADD/EDIT MODAL ================= -->
+
+<div class="modal-overlay" id="noticeModal">
+
+  <div class="modal">
+
+    <div class="modal-header">
+
+      <div class="modal-title" id="noticeModalTitle">
+        नवीन सूचना
+      </div>
+
+      <button class="close-btn" onclick="closeNoticeModal()">✕</button>
+
+    </div>
+
+    <div class="form-group">
+
+      <label class="form-label">सूचनेचे शीर्षक</label>
+
+      <input
+        id="noticeTitleInput"
+        class="form-control"
+        placeholder="उदा. गणेशोत्सव आरती वेळ"
+        autocomplete="off"
+        onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('noticeContentInput').focus();}"
+      >
+
+    </div>
+
+    <div class="form-group">
+
+      <label class="form-label">तपशील</label>
+
+      <textarea
+        id="noticeContentInput"
+        class="form-control"
+        placeholder="सूचनेचा संपूर्ण तपशील येथे लिहा..."
+      ></textarea>
+
+    </div>
+
+    <div class="form-group">
+
+      <div class="checkbox-row">
+
+        <input type="checkbox" id="noticePinnedInput">
+
+        <label for="noticePinnedInput">वर पिन करा (महत्त्वाची सूचना)</label>
+
+      </div>
+
+    </div>
+
+    <div class="modal-actions">
+
+      <button class="btn btn-soft" onclick="closeNoticeModal()">
+        रद्द करा
+      </button>
+
+      <button class="btn btn-primary" id="noticeSaveBtn" onclick="saveNoticeModal()">
+        ✓ सेव्ह करा
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
+
+
+<!-- ================= NOTICE DELETE MODAL ================= -->
+
+<div class="modal-overlay" id="deleteNoticeModal">
+
+  <div class="modal delete-modal">
+
+    <div class="delete-icon">🗑</div>
+
+    <div class="modal-title">
+      सूचना हटवायची आहे?
+    </div>
+
+    <div class="delete-text">
+      <span class="delete-name" id="deleteNoticeTitle"></span>
+      <br>
+      ही सूचना फलकावरून कायमची हटवली जाईल.
+    </div>
+
+    <div class="modal-actions" style="justify-content:center; margin-top:25px;">
+
+      <button class="btn btn-soft" onclick="closeDeleteNoticeModal()">
+        रद्द करा
+      </button>
+
+      <button class="btn" style="background:#dc2626;color:white;" onclick="confirmDeleteNotice()">
+        🗑 हटवा
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
+
+
 <!-- ================= TOAST ================= -->
 
 <div class="toast-container" id="toastContainer"></div>
@@ -1305,6 +1628,15 @@ let editingMember = null;
 let modalSelectedGalli = "";
 
 let deletingMember = null;
+
+
+let NOTICES = [];
+
+let noticeModalMode = "add";
+
+let editingNotice = null;
+
+let deletingNotice = null;
 
 
 /* =====================================================
@@ -1472,6 +1804,8 @@ async function init(){
 
     await loadMembers();
 
+    await loadNotices();
+
     subscribeRealtime();
 
   }
@@ -1557,6 +1891,700 @@ async function loadMembers(){
 
 
 /* =====================================================
+   LOAD NOTICES
+===================================================== */
+
+async function loadNotices(){
+
+  try{
+
+    const {
+      data,
+      error
+    } = await sb
+
+      .from("notices")
+
+      .select(
+        "id, title, content, pinned, created_at"
+      )
+
+      .order(
+        "pinned",
+        {
+          ascending:false
+        }
+      )
+
+      .order(
+        "created_at",
+        {
+          ascending:false
+        }
+      );
+
+
+    if(error)
+      throw error;
+
+
+    NOTICES =
+      data || [];
+
+
+    renderNotices();
+
+  }
+
+  catch(error){
+
+    console.error(error);
+
+    showToast(
+      "सूचना लोड झाल्या नाहीत",
+      "error"
+    );
+
+  }
+
+}
+
+
+/* =====================================================
+   FORMAT NOTICE DATE
+===================================================== */
+
+function formatNoticeDate(iso){
+
+  const d =
+    new Date(iso);
+
+
+  const datePart =
+    d.toLocaleDateString(
+      "en-IN",
+      {
+        day:"2-digit",
+        month:"short",
+        year:"numeric"
+      }
+    );
+
+
+  const timePart =
+    d.toLocaleTimeString(
+      "en-IN",
+      {
+        hour:"2-digit",
+        minute:"2-digit"
+      }
+    );
+
+
+  return datePart + " · " + timePart;
+
+}
+
+
+/* =====================================================
+   RENDER NOTICES
+===================================================== */
+
+function renderNotices(){
+
+  const listEl =
+    document.getElementById("noticeList");
+
+
+  if(!listEl)
+    return;
+
+
+  if(!NOTICES.length){
+
+    listEl.innerHTML = `
+
+      <div class="notice-empty">
+        अजून कोणतीही सूचना नाही. "नवीन सूचना" वर क्लिक करून सुरुवात करा.
+      </div>
+
+    `;
+
+    return;
+
+  }
+
+
+  listEl.innerHTML = "";
+
+
+  NOTICES.forEach(notice => {
+
+    listEl.appendChild(
+      createNoticeCard(notice)
+    );
+
+  });
+
+}
+
+
+/* =====================================================
+   CREATE NOTICE CARD
+===================================================== */
+
+function createNoticeCard(notice){
+
+  const card =
+    document.createElement("div");
+
+  card.className =
+    "notice-card" +
+    (notice.pinned ? " pinned" : "");
+
+
+  card.innerHTML = `
+
+    <div class="notice-top-row">
+
+      <div>
+
+        <div class="notice-title-row">
+
+          <span class="notice-title">
+            ${escapeHTML(notice.title)}
+          </span>
+
+          ${
+            notice.pinned
+              ? `<span class="pin-badge">📌 महत्त्वाचे</span>`
+              : ""
+          }
+
+        </div>
+
+        <div class="notice-content">
+          ${escapeHTML(notice.content)}
+        </div>
+
+        <div class="notice-date">
+          ${formatNoticeDate(notice.created_at)}
+        </div>
+
+      </div>
+
+
+      <div class="notice-actions">
+
+        <button
+          class="icon-btn"
+          title="${notice.pinned ? 'पिन काढा' : 'पिन करा'}"
+        >
+          ${notice.pinned ? "📌" : "📍"}
+        </button>
+
+        <button
+          class="icon-btn edit"
+          title="संपादित करा"
+        >
+          ✎
+        </button>
+
+        <button
+          class="icon-btn delete"
+          title="हटवा"
+        >
+          🗑
+        </button>
+
+      </div>
+
+    </div>
+
+  `;
+
+
+  const buttons =
+    card.querySelectorAll("button");
+
+
+  buttons[0].onclick = () =>
+    togglePinNotice(notice);
+
+
+  buttons[1].onclick = () =>
+    openEditNoticeModal(notice);
+
+
+  buttons[2].onclick = () =>
+    openDeleteNoticeModal(notice);
+
+
+  return card;
+
+}
+
+
+/* =====================================================
+   TOGGLE PIN
+===================================================== */
+
+async function togglePinNotice(notice){
+
+  try{
+
+    const newPinned =
+      !notice.pinned;
+
+
+    const {
+      error
+    } = await sb
+
+      .from("notices")
+
+      .update({
+        pinned:newPinned
+      })
+
+      .eq(
+        "id",
+        notice.id
+      );
+
+
+    if(error)
+      throw error;
+
+
+    notice.pinned =
+      newPinned;
+
+
+    showToast(
+      newPinned
+        ? "सूचना पिन केली ✓"
+        : "पिन काढली ✓"
+    );
+
+
+    NOTICES =
+      [...NOTICES].sort(
+        (a,b) => {
+
+          if(a.pinned !== b.pinned)
+            return a.pinned ? -1 : 1;
+
+
+          return (
+            new Date(b.created_at) -
+            new Date(a.created_at)
+          );
+
+        }
+      );
+
+
+    renderNotices();
+
+  }
+
+  catch(error){
+
+    showToast(
+      "पिन करता आले नाही",
+      "error"
+    );
+
+  }
+
+}
+
+
+/* =====================================================
+   ADD / EDIT NOTICE MODAL
+===================================================== */
+
+function openAddNoticeModal(){
+
+  noticeModalMode =
+    "add";
+
+  editingNotice =
+    null;
+
+
+  document.getElementById(
+    "noticeModalTitle"
+  ).textContent =
+    "नवीन सूचना";
+
+
+  document.getElementById(
+    "noticeTitleInput"
+  ).value =
+    "";
+
+
+  document.getElementById(
+    "noticeContentInput"
+  ).value =
+    "";
+
+
+  document.getElementById(
+    "noticePinnedInput"
+  ).checked =
+    false;
+
+
+  document.getElementById(
+    "noticeModal"
+  ).classList.add("show");
+
+
+  setTimeout(() => {
+
+    document.getElementById(
+      "noticeTitleInput"
+    ).focus();
+
+  },100);
+
+}
+
+
+function openEditNoticeModal(notice){
+
+  noticeModalMode =
+    "edit";
+
+  editingNotice =
+    notice;
+
+
+  document.getElementById(
+    "noticeModalTitle"
+  ).textContent =
+    "सूचना संपादित करा";
+
+
+  document.getElementById(
+    "noticeTitleInput"
+  ).value =
+    notice.title;
+
+
+  document.getElementById(
+    "noticeContentInput"
+  ).value =
+    notice.content;
+
+
+  document.getElementById(
+    "noticePinnedInput"
+  ).checked =
+    !!notice.pinned;
+
+
+  document.getElementById(
+    "noticeModal"
+  ).classList.add("show");
+
+
+  setTimeout(() => {
+
+    document.getElementById(
+      "noticeTitleInput"
+    ).focus();
+
+  },100);
+
+}
+
+
+function closeNoticeModal(){
+
+  document.getElementById(
+    "noticeModal"
+  ).classList.remove("show");
+
+}
+
+
+async function saveNoticeModal(){
+
+  const title =
+    document
+      .getElementById(
+        "noticeTitleInput"
+      )
+      .value
+      .trim();
+
+
+  const content =
+    document
+      .getElementById(
+        "noticeContentInput"
+      )
+      .value
+      .trim();
+
+
+  const pinned =
+    document
+      .getElementById(
+        "noticePinnedInput"
+      )
+      .checked;
+
+
+  if(!title || !content){
+
+    showToast(
+      "कृपया शीर्षक आणि तपशील दोन्ही लिहा",
+      "error"
+    );
+
+    return;
+
+  }
+
+
+  const saveButton =
+    document.getElementById(
+      "noticeSaveBtn"
+    );
+
+
+  saveButton.disabled =
+    true;
+
+
+  try{
+
+    if(noticeModalMode === "add"){
+
+      const {
+        data,
+        error
+      } = await sb
+
+        .from("notices")
+
+        .insert({
+
+          title:title,
+
+          content:content,
+
+          pinned:pinned
+
+        })
+
+        .select()
+
+        .single();
+
+
+      if(error)
+        throw error;
+
+
+      NOTICES.unshift(data);
+
+
+      showToast(
+        "सूचना प्रकाशित झाली ✓"
+      );
+
+    }
+
+    else{
+
+      const {
+        error
+      } = await sb
+
+        .from("notices")
+
+        .update({
+
+          title:title,
+
+          content:content,
+
+          pinned:pinned
+
+        })
+
+        .eq(
+          "id",
+          editingNotice.id
+        );
+
+
+      if(error)
+        throw error;
+
+
+      editingNotice.title =
+        title;
+
+      editingNotice.content =
+        content;
+
+      editingNotice.pinned =
+        pinned;
+
+
+      showToast(
+        "सूचना अपडेट झाली ✓"
+      );
+
+    }
+
+
+    NOTICES =
+      [...NOTICES].sort(
+        (a,b) => {
+
+          if(a.pinned !== b.pinned)
+            return a.pinned ? -1 : 1;
+
+
+          return (
+            new Date(b.created_at) -
+            new Date(a.created_at)
+          );
+
+        }
+      );
+
+
+    closeNoticeModal();
+
+    renderNotices();
+
+  }
+
+  catch(error){
+
+    console.error(error);
+
+    showToast(
+      "सेव्ह करता आले नाही: " +
+      (error.message || error),
+      "error"
+    );
+
+  }
+
+  finally{
+
+    saveButton.disabled =
+      false;
+
+  }
+
+}
+
+
+/* =====================================================
+   DELETE NOTICE
+===================================================== */
+
+function openDeleteNoticeModal(notice){
+
+  deletingNotice =
+    notice;
+
+
+  document.getElementById(
+    "deleteNoticeTitle"
+  ).textContent =
+    notice.title;
+
+
+  document.getElementById(
+    "deleteNoticeModal"
+  ).classList.add("show");
+
+}
+
+
+function closeDeleteNoticeModal(){
+
+  deletingNotice =
+    null;
+
+
+  document.getElementById(
+    "deleteNoticeModal"
+  ).classList.remove("show");
+
+}
+
+
+async function confirmDeleteNotice(){
+
+  if(!deletingNotice)
+    return;
+
+
+  try{
+
+    const {
+      error
+    } = await sb
+
+      .from("notices")
+
+      .delete()
+
+      .eq(
+        "id",
+        deletingNotice.id
+      );
+
+
+    if(error)
+      throw error;
+
+
+    NOTICES =
+      NOTICES.filter(
+        notice =>
+          notice.id !==
+          deletingNotice.id
+      );
+
+
+    closeDeleteNoticeModal();
+
+    renderNotices();
+
+
+    showToast(
+      "सूचना हटवण्यात आली"
+    );
+
+  }
+
+  catch(error){
+
+    showToast(
+      "सूचना हटवता आली नाही",
+      "error"
+    );
+
+  }
+
+}
+
+
+/* =====================================================
    REALTIME
 ===================================================== */
 
@@ -1581,6 +2609,33 @@ function subscribeRealtime(){
       () => {
 
         loadMembers();
+
+      }
+
+    )
+
+    .subscribe();
+
+
+  sb
+
+    .channel(
+      "notices_changes"
+    )
+
+    .on(
+
+      "postgres_changes",
+
+      {
+        event:"*",
+        schema:"public",
+        table:"notices"
+      },
+
+      () => {
+
+        loadNotices();
 
       }
 
@@ -4064,6 +5119,44 @@ document
   );
 
 
+document
+  .getElementById("noticeModal")
+  .addEventListener(
+    "click",
+    event => {
+
+      if(
+        event.target.id ===
+        "noticeModal"
+      ){
+
+        closeNoticeModal();
+
+      }
+
+    }
+  );
+
+
+document
+  .getElementById("deleteNoticeModal")
+  .addEventListener(
+    "click",
+    event => {
+
+      if(
+        event.target.id ===
+        "deleteNoticeModal"
+      ){
+
+        closeDeleteNoticeModal();
+
+      }
+
+    }
+  );
+
+
 /* =====================================================
    ESC KEY
 ===================================================== */
@@ -4077,6 +5170,10 @@ document.addEventListener(
       closeMemberModal();
 
       closeDeleteModal();
+
+      closeNoticeModal();
+
+      closeDeleteNoticeModal();
 
     }
 
